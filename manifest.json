@@ -3,7 +3,7 @@
   "id": "./",
   "name": "PTC Garage Management",
   "short_name": "PTC Garage",
-  "description": "Vehicle Entry and Exit Control System",
+  "description": "PTC Vehicle Entry and Exit Control System",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
