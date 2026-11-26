@@ -94,8 +94,8 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     const {data,error}=await supabase.from("notifications").select("*").order("created_at",{ascending:false}).limit(200);
     if(error)setMessage("Could not load notifications: "+error.message);else setRows(data||[]);
   }
-  function startAdd(){setEditing(null);setForm(empty(config.fields));setFormOpen(true);setMessage("");}
-  function startEdit(row:any){setEditing(row);setForm(Object.fromEntries(config.fields.map(f=>[f.key,row[f.key]==null?"":String(row[f.key]).slice(0,10)])));setFormOpen(true);setMessage("");}
+  function startAdd(){if(!config)return;setEditing(null);setForm(empty(config.fields));setFormOpen(true);setMessage("");}
+  function startEdit(row:any){if(!config)return;setEditing(row);setForm(Object.fromEntries(config.fields.map(f=>[f.key,row[f.key]==null?"":String(row[f.key]).slice(0,10)])));setFormOpen(true);setMessage("");}
   async function save(e:React.FormEvent){
     e.preventDefault(); if(!supabase||!config)return;
     const actualSite = isAdmin ? siteId : profile.site_id;
