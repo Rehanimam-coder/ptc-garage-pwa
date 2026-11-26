@@ -536,7 +536,7 @@ export default function Home() {
           <div className="siteListHeader"><div><h3>Recent breakdown activity</h3><p>Latest Breakdown entries across your permitted site scope.</p></div><button className="secondaryBtn" onClick={()=>setSection("breakdowns")}>View all breakdowns <ArrowUpRight size={15}/></button></div>
           <VisitTable rows={breakdownVehicles.slice(0,12)}/>
         </section>}
-        {(section==="breakdowns"||section==="maintenance")&&profile.role!=="storekeeper"&&<ModuleWorkspace section={section} profile={profile} sites={sites}/>}
+        {(section==="breakdowns"||section==="maintenance")&&profile.role!=="storekeeper"&&<ModuleWorkspace section={section} profile={profile} sites={sites} onNavigate={setSection}/>}
         {section==="reports"&&profile.role!=="storekeeper"&&<section className="sitePage">
           <div className="siteIntro"><div><span className="eyebrow dark">REPORT CENTRE</span><h1>Report Creation</h1><p>Generate vehicle activity reports for any date range.</p></div></div>
           <div className="siteFormCard reportFormCard"><div className="siteFormTitle"><div className="siteIcon"><FileBarChart2 size={20}/></div><div><h3>Choose report filters</h3><p>Reports use the vehicle IN date and respect your account permissions.</p></div></div>
