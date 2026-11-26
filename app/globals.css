@@ -149,3 +149,20 @@ body{background:#f7f9fc;color:#101828}
 .notice{background:#f0f7f3;border-color:#dceee3;color:#175c3d}
 @media(max-width:900px){.appShell{grid-template-columns:220px minmax(0,1fr)}.topbar{padding:0 20px}.content{padding:24px 20px}}
 @media(max-width:650px){.appShell{display:block}.sidebar{position:relative;min-height:auto;padding:10px 12px;border-right:0;border-bottom:1px solid #e5eaf0}.sideBrand{padding:0 5px 10px}.sidebar .sideNav{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;max-height:none;padding-bottom:5px;gap:9px}.navGroup{flex:0 0 auto;min-width:140px}.navGroupTitle{font-size:9px}.navGroupItems .navItem{font-size:10px;padding:8px 9px}.topbar{height:70px;padding:0 16px}.content{padding:20px 14px}.sideBottom{display:none}}
+
+
+/* Employee Directory */
+.employeeDirectoryTools{padding:17px 20px;margin-bottom:18px}
+.employeeDirectoryFilters{display:grid;grid-template-columns:minmax(220px,2fr) minmax(140px,1fr) minmax(160px,1fr) auto;gap:13px;align-items:end}
+.employeeDirectoryFilters label{display:flex;flex-direction:column;gap:7px;color:#536273;font-size:11px;font-weight:700;min-width:0}
+.employeeDirectoryFilters input,.employeeDirectoryFilters select,.employeeNotes{width:100%;min-height:42px;border:1px solid #d5dde7;border-radius:8px;padding:10px 12px;background:#fff;color:var(--ink);font:400 12px 'DM Sans',sans-serif;outline:none}
+.employeeDirectoryFilters input:focus,.employeeDirectoryFilters select:focus,.employeeNotes:focus{border-color:#54b58b;box-shadow:0 0 0 3px #22a06b18}
+.employeeExport{height:42px;white-space:nowrap}
+.employeeNotes{resize:vertical;min-height:78px}
+.employeeNameCell{display:flex;align-items:center;gap:10px;min-width:165px}
+.employeeNameCell b{display:block;color:#101828;font-size:12px}
+.employeeNameCell small{display:block;color:#7b8794;font-size:10px;margin-top:4px}
+.employeeAvatar{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;background:#eaf7ef;color:#087a46;font-size:10px;font-weight:800}
+.employeeTable{min-width:1180px}
+@media(max-width:1000px){.employeeDirectoryFilters{grid-template-columns:repeat(2,minmax(0,1fr))}.employeeExport{justify-self:start}}
+@media(max-width:600px){.employeeDirectoryFilters{grid-template-columns:1fr}.employeeDirectoryTools{padding:14px}.employeeExport{width:100%}}
