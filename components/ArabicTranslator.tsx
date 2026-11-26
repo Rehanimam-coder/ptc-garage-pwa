@@ -30,7 +30,7 @@ const translations: Record<string, string> = {
   "Send a direct message to one team member, or leave recipient as Team broadcast.":"أرسل رسالة مباشرة إلى أحد أعضاء الفريق، أو اترك المستلم كرسالة جماعية للفريق.",
   "Team broadcast":"رسالة جماعية للفريق","Write a team message...":"اكتب رسالة للفريق...","Send message":"إرسال الرسالة","No messages yet.":"لا توجد رسائل حتى الآن.",
   "Your account notifications and updates.":"إشعارات حسابك وتحديثاته.","Time":"الوقت","Notification":"الإشعار","Message":"الرسالة","Status":"الحالة","Read":"مقروء","Unread":"غير مقروء","Mark read":"تحديد كمقروء","No notifications yet.":"لا توجد إشعارات حتى الآن.",
-  "Your current sign-in and access information.":"معلومات تسجيل الدخول والوصول الحالية الخاصة بك.","FULL NAME":"الاسم الكامل","USER ID":"معرّف المستخدم","ROLE":"الدور","ASSIGNED SITE":"الموقع المخصص",
+  "Your current sign-in and access information.":"معلومات تسجيل الدخول والوصول الحالية الخاصة بك.","FULL NAME":"الاسم الكامل","ROLE":"الدور","ASSIGNED SITE":"الموقع المخصص",
   "Workspace home":"الصفحة الرئيسية لمساحة العمل","Shortcuts to the main garage workflows.":"اختصارات إلى مهام الورشة الرئيسية.","Tasks and records that need your attention.":"المهام والسجلات التي تتطلب اهتمامك.",
   "Use the sidebar to open a module. Assigned-site and role permissions remain active.":"استخدم الشريط الجانبي لفتح وحدة. تظل صلاحيات الموقع والدور المخصصين سارية.",
   "Core role boundaries are protected at database level.":"تتم حماية حدود الأدوار الأساسية على مستوى قاعدة البيانات.",
