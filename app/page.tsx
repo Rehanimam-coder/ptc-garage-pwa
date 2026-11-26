@@ -370,8 +370,9 @@ export default function Home() {
 
   const isStore = profile.role === "storekeeper";
   const navGroups = isStore
-    ? [{label:"PARTS MANAGEMENT",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes}]}]
+    ? [{label:"WORKSPACE",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard}]},{label:"PARTS MANAGEMENT",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes}]}]
     : [
+      {label:"WORKSPACE",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard}]},
       {label:"VEHICLE MANAGEMENT",items:[{id:"vehicle-in",label:"Vehicle IN",icon:CarFront},{id:"vehicle-out",label:"Vehicle OUT",icon:LogOut}]},
       {label:"PARTS MANAGEMENT",items:[{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes}]},
       {label:"BREAKDOWN MANAGEMENT",items:[{id:"breakdown-dashboard",label:"Dashboard",icon:Gauge},{id:"breakdowns",label:"Breakdowns",icon:AlertTriangle}]},
@@ -590,9 +591,9 @@ function visitCategory(purpose:string|null):"breakdown"|"maintenance"|"other" {
   return "other";
 }
 function VisitTable({rows}:{rows:Vehicle[]}) {
-  return <div className="siteTableWrap"><table className="siteTable visitTable"><thead><tr><th>PTC ID</th><th>Vehicle</th><th>Purpose</th><th>Complaint / Problem</th><th>Work Description</th><th>IN Date / Time</th><th>OUT Date / Time</th><th>Duration</th><th>Status</th></tr></thead><tbody>
-    {rows.map(v=><tr key={v.id}><td><span className="ptcIdTag">{v.ptc_id||"—"}</span></td><td>{v.vehicle_type}</td><td>{v.purpose_of_visit||"—"}</td><td>{v.complaint}</td><td>{v.work_description||"—"}</td><td>{new Date(v.in_at).toLocaleString()}</td><td>{v.out_at?new Date(v.out_at).toLocaleString():"—"}</td><td>{formatDuration(v.in_at,v.out_at)}</td><td><span className={v.status==="IN"?"statusActive":"statusInactive"}>{v.status}</span></td></tr>)}
-    {rows.length===0&&<tr><td colSpan={9}>No records found for this category.</td></tr>}
+  return <div className="siteTableWrap"><table className="siteTable visitTable"><thead><tr><th>PTC ID</th><th>Vehicle</th><th>Purpose</th><th>Complaint / Problem</th><th>Work Description</th><th>IN Date / Time</th><th>OUT Date / Time</th><th>Duration</th><th>Status</th><th>IN Remarks</th><th>OUT Remarks</th><th>Work Details</th></tr></thead><tbody>
+    {rows.map(v=><tr key={v.id}><td><span className="ptcIdTag">{v.ptc_id||"—"}</span></td><td>{v.vehicle_type}</td><td>{v.purpose_of_visit||"—"}</td><td>{v.complaint}</td><td>{v.work_description||"—"}</td><td>{new Date(v.in_at).toLocaleString()}</td><td>{v.out_at?new Date(v.out_at).toLocaleString():"—"}</td><td>{formatDuration(v.in_at,v.out_at)}</td><td><span className={v.status==="IN"?"statusActive":"statusInactive"}>{v.status}</span></td><td>{v.in_remark||"—"}</td><td>{v.out_remark||"—"}</td><td>{v.work_details?.length?v.work_details.map(w=>w.name+" ("+w.designation+"): "+w.work_done).join("; "):"—"}</td></tr>)}
+    {rows.length===0&&<tr><td colSpan={12}>No records found for this category.</td></tr>}
   </tbody></table></div>;
 }
 function Stat({icon,label,value,hint}:{icon:React.ReactNode;label:string;value:number;hint:string}) { return <div className="statCard"><div className="statTop"><span>{label}</span><i>{icon}</i></div><strong>{value.toLocaleString()}</strong><small>{hint}</small></div>; }
