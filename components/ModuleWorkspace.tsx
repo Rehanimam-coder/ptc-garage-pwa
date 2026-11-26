@@ -39,6 +39,7 @@ const empty = (fields: Field[]) => Object.fromEntries(fields.map(f => [f.key, f.
 export default function ModuleWorkspace({ section, profile, sites, onNavigate }: { section: string; profile: Profile; sites: Site[]; onNavigate: (section:string)=>void }) {
   const config = configs[section];
   const [rows,setRows] = useState<any[]>([]);
+  const [legacyRows,setLegacyRows] = useState<any[]>([]);
   const [loading,setLoading] = useState(false);
   const [saving,setSaving] = useState(false);
   const [message,setMessage] = useState("");
@@ -76,7 +77,8 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     await supabase.from("audit_logs").insert({user_id:profile.user_id,action,module,record_id:id,details});
   }
   useEffect(()=>{ if(config){setSiteId(profile.site_id||""); void load();} },[section,profile.user_id,siteId]);
-  useEffect(()=>{ if(section==="private-chat"){void loadChat();void loadChatUsers();} if(section==="notifications") void loadNotifications(); if(section==="settings") void loadSettings(); },[section]);
+  useEffect(()=>{ if(section==="private-chat"){void loadChat();void loadChatUsers();} if(section==="notifications") void loadNotifications(); if(section==="settings") void loadSettings(); if(section==="breakdowns"||section==="maintenance") void loadLegacyVisits(); },[section]);
+  async function loadLegacyVisits(){if(!supabase)return;const {data,error}=await supabase.from("vehicle_visits").select("*").order("in_at",{ascending:false}).limit(1000);if(error){setMessage("Could not load historical vehicle visits: "+error.message);return;}const key=section==="breakdowns"?"breakdown":"maintenance";setLegacyRows((data||[]).filter((v:any)=>String(v.purpose_of_visit||"").toLowerCase().includes(key)));}
   async function loadChatUsers(){if(!supabase)return;const {data}=await supabase.from("profiles").select("user_id,username,full_name,role,is_active").eq("is_active",true).order("full_name");setChatUsers((data||[]).filter((u:any)=>u.user_id!==profile.user_id));}
   async function loadSettings(){if(!supabase)return;const {data}=await supabase.from("app_settings").select("setting_key,setting_value");(data||[]).forEach((r:any)=>{const v=r.setting_value?.value;if(r.setting_key==="app_name"&&v)setSettingName(v);if(r.setting_key==="primary_color"&&v)setSettingColor(v);if(r.setting_key==="language"&&v)setSettingLanguage(v);});}
   async function loadChat() {
@@ -137,6 +139,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
         {filtered.map(row=><tr key={row.id}><td>{siteName(row.site_id)}</td>{config.fields.map(f=><td key={f.key}>{row[f.key]===null||row[f.key]===undefined?"—":String(row[f.key])}</td>)}<td>{row.updated_at?new Date(row.updated_at).toLocaleDateString():new Date(row.created_at).toLocaleDateString()}</td><td><div className="siteActions"><button className="iconAction" onClick={()=>startEdit(row)}>Edit</button>{isAdmin&&<button className="iconAction deactivate" onClick={()=>remove(row)}>Delete</button>}</div></td></tr>)}
         {filtered.length===0&&<tr><td colSpan={config.fields.length+3}>No records found. Add a new record to get started.</td></tr>}
       </tbody></table></div>}
+      {(section==="breakdowns"||section==="maintenance")&&<><div className="siteListHeader"><div><h3>Historical vehicle visit records</h3><p>Existing records from the original Vehicle IN / OUT workflow are preserved here.</p></div><span className="siteCount">{legacyRows.length} Records</span></div><div className="siteTableWrap"><table className="siteTable"><thead><tr><th>PTC ID</th><th>Vehicle</th><th>Problem / work</th><th>Purpose</th><th>IN date</th><th>OUT date</th><th>Status</th></tr></thead><tbody>{legacyRows.map(v=><tr key={v.id}><td>{v.ptc_id||"—"}</td><td>{v.vehicle_type}</td><td>{v.complaint}</td><td>{v.purpose_of_visit}</td><td>{new Date(v.in_at).toLocaleString()}</td><td>{v.out_at?new Date(v.out_at).toLocaleString():"—"}</td><td>{v.status}</td></tr>)}{legacyRows.length===0&&<tr><td colSpan={7}>No historical records found for this category.</td></tr>}</tbody></table></div></>}
       <div className="siteFootnote">Access is enforced by Supabase Row Level Security. Supervisors are limited to their assigned site; Store Keeper access is restricted to parts and stores modules.</div>
     </section>;
   }
@@ -197,6 +200,6 @@ function AskData(){
 }
 function CentralReports({profile,sites}:{profile:Profile;sites:Site[]}){
  const [summary,setSummary]=useState<any[]>([]);
- useEffect(()=>{void(async()=>{const tables=["vehicle_visits","parts_orders","parts_receipts","breakdown_jobs","preventive_maintenance","ptc_assets","general_store_items","tasks_projects"];const rows=await Promise.all(tables.map(async t=>{const {count}=await supabase!.from(t).select("*",{count:"exact",head:true});return {name:t,count:count||0};}));setSummary(rows);})();},[]);
+ useEffect(()=>{void(async()=>{const tables=profile.role==="storekeeper"?["parts_orders","parts_receipts","general_store_items","tasks_projects"]:["vehicle_visits","parts_orders","parts_receipts","breakdown_jobs","preventive_maintenance","ptc_assets","general_store_items","tasks_projects"];const rows=await Promise.all(tables.map(async t=>{const {count}=await supabase!.from(t).select("*",{count:"exact",head:true});return {name:t,count:count||0};}));setSummary(rows);})();},[]);
  return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">INSIGHTS</span><h1>Centralized reports</h1><p>Live record totals across available operational modules.</p></div></div><div className="moduleStats">{summary.map(x=><article key={x.name}><small>{x.name.replace(/_/g," ")}</small><b>{x.count}</b></article>)}</div><p className="siteFootnote">Counts reflect the signed-in role's permitted data. For date-range vehicle exports, use Report Creation.</p></section>;
 }
