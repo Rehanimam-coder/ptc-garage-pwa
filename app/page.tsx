@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import ModuleWorkspace from "@/components/ModuleWorkspace";
 import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes, Plus, Pencil, Power, X, MapPin, ChevronDown, Gauge, AlertTriangle, FileBarChart2, Bell, UserRound, Home as HomeIcon, Truck, ShoppingCart, BriefcaseBusiness, MessageCircle, BarChart3, ShieldCheck, Settings, Upload, Activity, BrainCircuit, HelpCircle, Database, ClipboardCheck, CalendarClock, ContactRound, PackageSearch } from "lucide-react";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null; is_active: boolean };
@@ -238,6 +239,7 @@ export default function Home() {
   useEffect(() => { if (profile?.role === "admin" && section === "sites") void loadSites(); }, [profile, section]);
   useEffect(() => { if (profile?.role === "admin" && section === "users") { void loadSites(); void loadTeamUsers(); } }, [profile, section]);
   useEffect(() => { if (profile?.role === "admin" && section === "employee-directory") { setEmployeeMessage(""); void loadSites(); void loadTeamUsers(); void loadEmployeeDirectory(); } }, [profile, section]);
+  useEffect(() => { if (profile?.role === "admin" && ["ptc-assets","general-stores","tasks-projects","roles-permissions","master-data","audit-history","settings","historical-imports","system-health","ask-ptc-data","centralized-reports"].includes(section)) void loadSites(); }, [profile, section]);
   useEffect(()=>{if(profile&&["parts-order","orders","parts-receive","receipts"].includes(section)){void loadPartsOrders();if(profile.role!=="storekeeper"){void loadVehicles();if(profile.role==="admin")void loadSites();}}},[profile,section]);
   useEffect(() => {
     if (profile && ["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && profile.role !== "storekeeper") {
@@ -534,16 +536,7 @@ export default function Home() {
           <div className="siteListHeader"><div><h3>Recent breakdown activity</h3><p>Latest Breakdown entries across your permitted site scope.</p></div><button className="secondaryBtn" onClick={()=>setSection("breakdowns")}>View all breakdowns <ArrowUpRight size={15}/></button></div>
           <VisitTable rows={breakdownVehicles.slice(0,12)}/>
         </section>}
-        {section==="breakdowns"&&profile.role!=="storekeeper"&&<section className="sitePage">
-          <div className="siteIntro"><div><span className="eyebrow dark">BREAKDOWN MANAGEMENT</span><h1>Breakdown Records</h1><p>Complete vehicle details for visits registered with Breakdown purpose.</p></div><button className="refreshBtn" onClick={loadVehicles}><RefreshCw size={16}/> Refresh</button></div>
-          <div className="siteListHeader"><div><h3>All breakdown records</h3><p>{breakdownVehicles.length} records found.</p></div><span className="siteCount">{breakdownVehicles.length} Breakdowns</span></div>
-          <VisitTable rows={breakdownVehicles}/>
-        </section>}
-        {section==="maintenance"&&profile.role!=="storekeeper"&&<section className="sitePage">
-          <div className="siteIntro"><div><span className="eyebrow dark">MAINTENANCE MANAGEMENT</span><h1>Maintenance Records</h1><p>Complete vehicle details for visits registered with Maintenance purpose.</p></div><button className="refreshBtn" onClick={loadVehicles}><RefreshCw size={16}/> Refresh</button></div>
-          <div className="siteListHeader"><div><h3>All maintenance records</h3><p>{maintenanceVehicles.length} records found.</p></div><span className="siteCount">{maintenanceVehicles.length} Records</span></div>
-          <VisitTable rows={maintenanceVehicles}/>
-        </section>}
+        {(section==="breakdowns"||section==="maintenance")&&profile.role!=="storekeeper"&&<ModuleWorkspace section={section} profile={profile} sites={sites}/>}
         {section==="reports"&&profile.role!=="storekeeper"&&<section className="sitePage">
           <div className="siteIntro"><div><span className="eyebrow dark">REPORT CENTRE</span><h1>Report Creation</h1><p>Generate vehicle activity reports for any date range.</p></div></div>
           <div className="siteFormCard reportFormCard"><div className="siteFormTitle"><div className="siteIcon"><FileBarChart2 size={20}/></div><div><h3>Choose report filters</h3><p>Reports use the vehicle IN date and respect your account permissions.</p></div></div>
@@ -696,7 +689,7 @@ export default function Home() {
           {sitesLoading?<div className="siteEmpty"><div className="spinner"/> Loading sites...</div>:sites.length===0?<div className="siteEmpty">No sites found. Add your first site using the form above.</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Site</th><th>Site code</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody>{sites.map(site=><tr key={site.id}><td><div className="siteNameCell"><span className="siteRowIcon"><MapPin size={16}/></span><b>{site.name}</b></div></td><td><span className="siteCode">{site.code}</span></td><td>{site.address||"—"}</td><td><span className={site.is_active?"statusActive":"statusInactive"}>{site.is_active?"Active":"Inactive"}</span></td><td><div className="siteActions"><button type="button" className="iconAction" title="Edit site" onClick={()=>startEdit(site)}><Pencil size={15}/> Edit</button><button type="button" className={site.is_active?"iconAction deactivate":"iconAction activate"} title={site.is_active?"Deactivate site":"Activate site"} onClick={()=>toggleSite(site)}><Power size={15}/>{site.is_active?"Deactivate":"Activate"}</button></div></td></tr>)}</tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> Deactivating a site does not delete its existing vehicle, parts or history records.</div>
         </section>}
-        {!["overview","sites","users","employee-directory","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
+        {!["overview","sites","users","employee-directory","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <ModuleWorkspace section={section} profile={profile} sites={sites}/>}\n        {false && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
       </div>
     </section>
   </main>;
