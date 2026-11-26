@@ -246,7 +246,6 @@ html[dir="rtl"] .brand .ptcLogo,html[dir="rtl"] .mobileBrand .ptcLogo{margin-rig
 
 
 /* Arabic RTL refinements and consistent professional icon palette */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap');
 html[lang="ar"] body,html[lang="ar"] button,html[lang="ar"] input,html[lang="ar"] select,html[lang="ar"] textarea{font-family:'Noto Sans Arabic','DM Sans',sans-serif}
 html[dir="rtl"] .sidebar{border-left:1px solid #e1e8ef;border-right:0}
 html[dir="rtl"] .sideBrand{direction:rtl}
