@@ -370,9 +370,9 @@ export default function Home() {
 
   const isStore = profile.role === "storekeeper";
   const navGroups = isStore
-    ? [{label:"WORKSPACE",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard}]},{label:"PARTS MANAGEMENT",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes}]}]
+    ? [{label:"WORKSPACE",items:[{id:"overview",label:"Overview",icon:LayoutDashboard}]},{label:"PARTS MANAGEMENT",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes}]}]
     : [
-      {label:"WORKSPACE",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard}]},
+      {label:"WORKSPACE",items:[{id:"overview",label:"Overview",icon:LayoutDashboard}]},
       {label:"VEHICLE MANAGEMENT",items:[{id:"vehicle-in",label:"Vehicle IN",icon:CarFront},{id:"vehicle-out",label:"Vehicle OUT",icon:LogOut}]},
       {label:"PARTS MANAGEMENT",items:[{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes}]},
       {label:"BREAKDOWN MANAGEMENT",items:[{id:"breakdown-dashboard",label:"Dashboard",icon:Gauge},{id:"breakdowns",label:"Breakdowns",icon:AlertTriangle}]},
