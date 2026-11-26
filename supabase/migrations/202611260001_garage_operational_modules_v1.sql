@@ -1,0 +1,1 @@
+-- Additive operational module tables and role-aware RLS policies.
