@@ -215,12 +215,12 @@ function AskData(){
  const cardStyle:React.CSSProperties={background:"#fff",border:"1px solid #e4e9ee",borderRadius:14,padding:18,boxShadow:"0 3px 12px rgba(16,24,40,.04)"};
  const fieldStyle:React.CSSProperties={background:"#f7f9fb",borderRadius:10,padding:"10px 12px",minWidth:0};
  async function search(e:React.FormEvent){
-   e.preventDefault();if(!q.trim()||!supabase)return;
+   e.preventDefault();const db=supabase;if(!q.trim()||!db)return;
    setBusy(true);setError("");setSearched(true);
    const terms=q.trim();
    const tables=["vehicle_visits","parts_orders","breakdown_jobs","preventive_maintenance","ptc_assets"];
    const responses=await Promise.all(tables.map(async table=>{
-     const {data,error}=await supabase.from(table).select("*").limit(500);
+     const {data,error}=await db.from(table).select("*").limit(500);
      if(error)return {table,error:error.message,rows:[] as any[]};
      return {table,error:"",rows:(data||[]).filter((r:any)=>JSON.stringify(r).toLowerCase().includes(terms.toLowerCase()))};
    }));
