@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import ModuleWorkspace from "@/components/ModuleWorkspace";
+import ArabicTranslator from "@/components/ArabicTranslator";
 import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes, Plus, Pencil, Power, X, MapPin, ChevronDown, Gauge, AlertTriangle, FileBarChart2, Bell, UserRound, Home as HomeIcon, Truck, ShoppingCart, BriefcaseBusiness, MessageCircle, BarChart3, ShieldCheck, Settings, Upload, Activity, BrainCircuit, HelpCircle, Database, ClipboardCheck, CalendarClock, ContactRound, PackageSearch } from "lucide-react";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null; is_active: boolean };
@@ -494,7 +495,7 @@ export default function Home() {
   });
   const breakdownVehicles=vehicles.filter(v=>visitCategory(v.purpose_of_visit)==="breakdown");
 
-  return <main className="appShell">
+  return <ArabicTranslator language={language}><main className="appShell">
     <aside className="sidebar"><div className="brand sideBrand"><img className="ptcLogo" src="/ptc-logo.svg" alt="PTC Since 1969"/></div>
       <div className="sideLabel">{tr("WORKSPACE")}</div>
       <nav className="sideNav">
@@ -714,7 +715,7 @@ export default function Home() {
 
       </div>
     </section>
-  </main>;
+  </main></ArabicTranslator>;
 }
 
 function formatDuration(start: string, end: string | null) {
