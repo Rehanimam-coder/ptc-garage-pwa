@@ -239,6 +239,10 @@ export default function Home() {
   async function savePartsReceipt(e:React.FormEvent){
     e.preventDefault();if(!supabase||!profile||!receiptOrderId)return;const q=Number(receiptQty);
     if(!Number.isFinite(q)||q<=0){setPartsMessage("Enter a valid received quantity.");return;}
+    const selectedOrder=partOrders.find(o=>o.id===receiptOrderId);
+    const alreadyReceived=(selectedOrder?.receipts||[]).reduce((sum:number,r:any)=>sum+Number(r.quantity_received||0),0);
+    const remaining=Number(selectedOrder?.quantity||0)-alreadyReceived;
+    if(q>remaining){setPartsMessage("Received quantity cannot exceed the remaining quantity ("+remaining+" "+(selectedOrder?.unit||"")+").");return;}
     setReceiptSaving(true);setPartsMessage("");const {data:{user}}=await supabase.auth.getUser();
     const {error}=await supabase.from("parts_receipts").insert({order_id:receiptOrderId,received_by:user?.id,quantity_received:q,remarks:receiptRemarks.trim()||null});
     if(error)setPartsMessage("Could not record receipt: "+error.message);else{setPartsMessage("Parts receipt recorded successfully.");setReceiptOrderId("");setReceiptQty("1");setReceiptRemarks("");await loadPartsOrders();await loadCounts(profile);}setReceiptSaving(false);
