@@ -57,6 +57,8 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
   const [settingNotice,setSettingNotice] = useState("");
 
   const isAdmin = profile.role === "admin";
+  const adminSections = ["roles-permissions","settings","audit-history","master-data","historical-imports","system-health","ask-ptc-data"];
+  if(adminSections.includes(section) && !isAdmin) return <Denied/>;
   const siteName = (id:string|null) => sites.find(s=>s.id===id)?.name || "—";
 
   async function load() {
@@ -126,7 +128,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
       {formOpen&&<div className="siteFormCard"><div className="siteFormTitle"><div className="siteIcon">＋</div><div><h3>{editing?"Update record":"Add new record"}</h3><p>Fields marked required must be completed.</p></div></div>
         <form className="siteForm" onSubmit={save}>
           {isAdmin&&<div className="siteFields"><label>Site<select required value={siteId} onChange={e=>setSiteId(e.target.value)}><option value="">Select site</option>{sites.filter(s=>s.is_active).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label></div>}
-          <div className="siteFields moduleFields">{config.fields.map(f=><label key={f.key}>{f.label}{f.type==="textarea"?<textarea value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>:f.type==="select"?<select value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>{f.options?.map(o=><option key={o}>{o}</option>)}</select>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} min={f.type==="number"?"0":undefined} value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>}</label>)}</div>
+          <div className="siteFields moduleFields">{config.fields.map(f=><label key={f.key}>{f.label}{f.type==="textarea"?<textarea value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>:f.type==="select"?<select value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>{f.options?.map(o=><option key={o}>{o}</option>)}</select>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} min={f.type==="number"?(f.key==="repeat_interval"?"0.01":"0"):undefined} value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>}</label>)}</div>
           <div className="siteFormActions"><button type="button" className="secondaryBtn" onClick={()=>setFormOpen(false)}>Cancel</button><button className="primaryBtn siteSave" disabled={saving}>{saving?"Saving...":editing?"Save changes":"Save record"}</button></div>
         </form>
       </div>}
