@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes } from "lucide-react";
+import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes, Plus, Pencil, Power, X, MapPin } from "lucide-react";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null; is_active: boolean };
 type Counts = { inGarage: number; openOrders: number; receivedToday: number; users: number };
+type Site = { id: string; name: string; code: string; address: string | null; is_active: boolean; created_at?: string };
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -16,6 +17,14 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [checking, setChecking] = useState(true);
   const [section, setSection] = useState("overview");
+  const [sites, setSites] = useState<Site[]>([]);
+  const [sitesLoading, setSitesLoading] = useState(false);
+  const [siteSaving, setSiteSaving] = useState(false);
+  const [siteMessage, setSiteMessage] = useState("");
+  const [editingSite, setEditingSite] = useState<Site | null>(null);
+  const [siteName, setSiteName] = useState("");
+  const [siteCode, setSiteCode] = useState("");
+  const [siteAddress, setSiteAddress] = useState("");
 
   const configured = Boolean(supabase);
   const greeting = useMemo(() => profile?.full_name?.split(" ")[0] || profile?.username || "Team", [profile]);
@@ -48,7 +57,17 @@ export default function Home() {
     setCounts({ inGarage: vehicles.count || 0, openOrders: orders.count || 0, receivedToday: receipts.count || 0, users: users.count || 0 });
   }
 
+  async function loadSites() {
+    if (!supabase) return;
+    setSitesLoading(true); setSiteMessage("");
+    const { data, error } = await supabase.from("sites").select("id,name,code,address,is_active,created_at").order("name");
+    if (error) setSiteMessage("Could not load sites: " + error.message);
+    else setSites((data || []) as Site[]);
+    setSitesLoading(false);
+  }
+
   useEffect(() => { void loadProfile(); }, []);
+  useEffect(() => { if (profile?.role === "admin" && section === "sites") void loadSites(); }, [profile, section]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault(); setMessage("");
@@ -63,6 +82,34 @@ export default function Home() {
   }
 
   async function logout() { if (supabase) await supabase.auth.signOut(); setProfile(null); setPassword(""); setSection("overview"); }
+
+  function resetSiteForm() { setEditingSite(null); setSiteName(""); setSiteCode(""); setSiteAddress(""); setSiteMessage(""); }
+  function startEdit(site: Site) { setEditingSite(site); setSiteName(site.name); setSiteCode(site.code); setSiteAddress(site.address || ""); setSiteMessage(""); window.scrollTo({top:0,behavior:"smooth"}); }
+
+  async function saveSite(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase) return;
+    const name = siteName.trim();
+    const code = siteCode.trim().toUpperCase().replace(/\\s+/g, "-");
+    if (!name || !code) { setSiteMessage("Site name and site code are required."); return; }
+    setSiteSaving(true); setSiteMessage("");
+    const payload = { name, code, address: siteAddress.trim() || null };
+    const result = editingSite
+      ? await supabase.from("sites").update(payload).eq("id", editingSite.id)
+      : await supabase.from("sites").insert({ ...payload, is_active: true });
+    if (result.error) setSiteMessage("Could not save site: " + result.error.message);
+    else { setSiteMessage(editingSite ? "Site details updated successfully." : "New site added successfully."); resetSiteForm(); await loadSites(); }
+    setSiteSaving(false);
+  }
+
+  async function toggleSite(site: Site) {
+    if (!supabase) return;
+    const action = site.is_active ? "deactivate" : "activate";
+    if (!window.confirm("Are you sure you want to " + action + " " + site.name + "? Existing records will be kept.")) return;
+    const { error } = await supabase.from("sites").update({ is_active: !site.is_active }).eq("id", site.id);
+    if (error) setSiteMessage("Could not update site: " + error.message);
+    else { setSiteMessage(site.name + " " + (site.is_active ? "deactivated" : "activated") + "."); await loadSites(); }
+  }
 
   if (checking) return <main className="loading"><div className="spinner"/><span>Loading PTC Garage...</span></main>;
 
@@ -115,7 +162,25 @@ export default function Home() {
           </div>
           <div className="notice"><LockKeyhole size={18}/><div><b>Role-based access is enabled</b><p>{isStore?"Your portal is limited to parts orders and receiving. Vehicle records are not available to this account.":profile.role==="supervisor"?"You can manage vehicle and parts operations for your assigned site.":"You have administrator access to all sites and modules."}</p></div></div>
         </>}
-        {section!=="overview" && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{nav.find(n=>n.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
+        {section==="sites" && profile.role==="admin" && <section className="sitePage">
+          <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Manage your garage locations</h1><p>Add new sites, update details and control which locations are active.</p></div><button className="refreshBtn" onClick={loadSites}><RefreshCw size={16}/> Refresh</button></div>
+          <div className="siteFormCard">
+            <div className="siteFormTitle"><div className="siteIcon"><Building2 size={20}/></div><div><h3>{editingSite?"Edit site":"Add a new site"}</h3><p>{editingSite?"Update the selected location details.":"New sites are active immediately after saving."}</p></div></div>
+            <form className="siteForm" onSubmit={saveSite}>
+              <div className="siteFields">
+                <label>Site name<input value={siteName} onChange={e=>setSiteName(e.target.value)} placeholder="e.g. Jebel Ali" required maxLength={80}/></label>
+                <label>Site code<input value={siteCode} onChange={e=>setSiteCode(e.target.value)} placeholder="e.g. JEBEL-ALI" required maxLength={24}/></label>
+                <label className="siteAddress">Address / location (optional)<input value={siteAddress} onChange={e=>setSiteAddress(e.target.value)} placeholder="Enter site address or area" maxLength={180}/></label>
+              </div>
+              {siteMessage && <div className={siteMessage.includes("successfully")||siteMessage.includes("deactivated")||siteMessage.includes("activated")?"siteSuccess":"siteError"}>{siteMessage}</div>}
+              <div className="siteFormActions">{editingSite&&<button type="button" className="secondaryBtn" onClick={resetSiteForm}><X size={15}/> Cancel edit</button>}<button className="primaryBtn siteSave" disabled={siteSaving}>{siteSaving?"Saving...":editingSite?"Save changes":"Add site"} <Plus size={17}/></button></div>
+            </form>
+          </div>
+          <div className="siteListHeader"><div><h3>All sites</h3><p>{sites.filter(s=>s.is_active).length} active · {sites.length} total locations</p></div><span className="siteCount">{sites.length} Sites</span></div>
+          {sitesLoading?<div className="siteEmpty"><div className="spinner"/> Loading sites...</div>:sites.length===0?<div className="siteEmpty">No sites found. Add your first site using the form above.</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Site</th><th>Site code</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody>{sites.map(site=><tr key={site.id}><td><div className="siteNameCell"><span className="siteRowIcon"><MapPin size={16}/></span><b>{site.name}</b></div></td><td><span className="siteCode">{site.code}</span></td><td>{site.address||"—"}</td><td><span className={site.is_active?"statusActive":"statusInactive"}>{site.is_active?"Active":"Inactive"}</span></td><td><div className="siteActions"><button type="button" className="iconAction" title="Edit site" onClick={()=>startEdit(site)}><Pencil size={15}/> Edit</button><button type="button" className={site.is_active?"iconAction deactivate":"iconAction activate"} title={site.is_active?"Deactivate site":"Activate site"} onClick={()=>toggleSite(site)}><Power size={15}/>{site.is_active?"Deactivate":"Activate"}</button></div></td></tr>)}</tbody></table></div>}
+          <div className="siteFootnote"><LockKeyhole size={15}/> Deactivating a site does not delete its existing vehicle, parts or history records.</div>
+        </section>}
+        {section!=="overview" && section!=="sites" && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{nav.find(n=>n.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
       </div>
     </section>
   </main>;
