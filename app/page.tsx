@@ -585,6 +585,15 @@ export default function Home() {
             <Quick icon={<Boxes/>} title="Parts Received" desc="Record or review physical receipt" onClick={()=>setSection(isStore?"receipts":"parts-receive")}/>
             {profile.role==="admin" && <Quick icon={<Users/>} title="User Management" desc="Create and manage team accounts" onClick={()=>setSection("users")}/>}
           </div>
+          <div className="sectionHeading"><div><h3>All modules</h3><p>Every option available in your sidebar, grouped by category</p></div></div>
+          <div className="dashboardModuleDirectory">
+            {navGroups.map(group=><section className="dashboardModuleGroup" key={group.label}>
+              <div className="dashboardModuleHeading">{tr(group.label)}</div>
+              <div className="quickGrid">
+                {group.items.map(item=><Quick key={item.id} icon={<item.icon size={19}/>} title={tr(item.label)} desc={item.id==="overview"?"Open dashboard":item.id==="home"?"Return to home dashboard":"Open "+item.label} onClick={()=>setSection(item.id==="home"?"overview":item.id)}/>)}
+              </div>
+            </section>)}
+          </div>
           <div className="notice"><LockKeyhole size={18}/><div><b>Role-based access is enabled</b><p>{isStore?"Your portal is limited to parts orders and receiving. Vehicle records are not available to this account.":profile.role==="supervisor"?"You can manage vehicle and parts operations for your assigned site.":"You have administrator access to all sites and modules."}</p></div></div>
         </>}
         {["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history"].includes(section) && profile.role!=="storekeeper" && <section className="sitePage">
