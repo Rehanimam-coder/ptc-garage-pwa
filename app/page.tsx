@@ -74,8 +74,9 @@ export default function Home() {
   const [reportLoading,setReportLoading]=useState(false);
   const [reportMessage,setReportMessage]=useState("");
   const [openNavGroups,setOpenNavGroups]=useState<Record<string,boolean>>({
-    "VEHICLE MANAGEMENT":true,"PARTS MANAGEMENT":true,"BREAKDOWN MANAGEMENT":true,
-    "MAINTENANCE":true,"REPORTS":true,"ADMINISTRATION":true
+    "OVERVIEW":true,"WORKSPACE":true,"VEHICLE MANAGEMENT":true,"PARTS MANAGEMENT":true,
+    "PARTS AND SERVICES":true,"BREAKDOWN MANAGEMENT":true,"MAINTENANCE":true,
+    "COLLABORATION":true,"INSIGHTS":true,"REPORTS":true,"ADMINISTRATION":true,"SUPPORT":true
   });
 
 
