@@ -116,7 +116,14 @@ export default function Home() {
       action: "create", userId: newUserId.trim(), fullName: newUserName.trim(), password: newUserPassword,
       role: newUserRole, siteId: newUserRole === "supervisor" ? newUserSiteId : null
     }});
-    if (error || data?.error) setUserMessage("Could not create account: " + (data?.error || error?.message || "Unknown error"));
+    let detail = data?.error || error?.message || "Unknown error";
+    if (error && "context" in error && error.context instanceof Response) {
+      try {
+        const body = await error.context.clone().json();
+        if (body?.error) detail = body.error;
+      } catch { /* Keep the SDK error message if the response is not JSON. */ }
+    }
+    if (error || data?.error) setUserMessage("Could not create account: " + detail);
     else {
       setUserMessage("User account created successfully. Share the User ID and password securely with the employee.");
       setNewUserId(""); setNewUserName(""); setNewUserPassword(""); setNewUserRole("supervisor"); setNewUserSiteId("");
