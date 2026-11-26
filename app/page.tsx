@@ -240,6 +240,7 @@ export default function Home() {
   useEffect(() => { if (profile?.role === "admin" && section === "users") { void loadSites(); void loadTeamUsers(); } }, [profile, section]);
   useEffect(() => { if (profile?.role === "admin" && section === "employee-directory") { setEmployeeMessage(""); void loadSites(); void loadTeamUsers(); void loadEmployeeDirectory(); } }, [profile, section]);
   useEffect(() => { if (profile?.role === "admin" && ["ptc-assets","general-stores","tasks-projects","roles-permissions","master-data","audit-history","settings","historical-imports","system-health","ask-ptc-data","centralized-reports"].includes(section)) void loadSites(); }, [profile, section]);
+  useEffect(() => { if (profile?.role === "storekeeper" && section === "general-stores") void loadSites(); }, [profile, section]);
   useEffect(()=>{if(profile&&["parts-order","orders","parts-receive","receipts"].includes(section)){void loadPartsOrders();if(profile.role!=="storekeeper"){void loadVehicles();if(profile.role==="admin")void loadSites();}}},[profile,section]);
   useEffect(() => {
     if (profile && ["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && profile.role !== "storekeeper") {
