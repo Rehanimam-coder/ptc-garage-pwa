@@ -262,3 +262,9 @@ html[dir="rtl"] .siteForm input,html[dir="rtl"] .siteForm select,html[dir="rtl"]
 html[dir="rtl"] .siteTable th,html[dir="rtl"] .siteTable td,html[dir="rtl"] .modulePage table th,html[dir="rtl"] .modulePage table td{text-align:right}
 html[dir="rtl"] .brand .ptcLogo,html[dir="rtl"] .mobileBrand .ptcLogo{margin-right:0;margin-left:12px}
 @media(max-width:760px){html[dir="rtl"] .sideBrand{justify-content:flex-end}html[dir="rtl"] .userChip{justify-content:flex-start}}
+
+/* Login language selector */
+.loginLanguage{display:flex;justify-content:flex-end;margin:0 0 16px}
+.loginLanguage .languageToggle{min-width:54px}
+html[dir="rtl"] .loginLanguage{justify-content:flex-start}
+@media(max-width:650px){.loginLanguage{margin-bottom:10px}.mobileBrand{margin-bottom:35px}}
