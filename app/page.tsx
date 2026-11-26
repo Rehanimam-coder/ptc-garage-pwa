@@ -577,13 +577,22 @@ export default function Home() {
             <Stat icon={<Package/>} label="Received Today" value={counts.receivedToday} hint="Parts receipt entries"/>
             {profile.role==="admin" && <Stat icon={<Users/>} label="Team Members" value={counts.users} hint="Registered accounts"/>}
           </div>
-          <div className="sectionHeading"><div><h3>Quick access</h3><p>Go directly to your daily tasks</p></div></div>
-          <div className="quickGrid">
-            {!isStore && <Quick icon={<CarFront/>} title="Vehicle IN" desc="Register a vehicle arriving at the garage" onClick={()=>setSection("vehicle-in")}/>}
-            {!isStore && <Quick icon={<LogOut/>} title="Vehicle OUT" desc="Complete release of a vehicle" onClick={()=>setSection("vehicle-out")}/>}
-            <Quick icon={<Package/>} title="Parts Order" desc="Create and submit a parts request" onClick={()=>setSection(isStore?"orders":"parts-order")}/>
-            <Quick icon={<Boxes/>} title="Parts Received" desc="Record or review physical receipt" onClick={()=>setSection(isStore?"receipts":"parts-receive")}/>
-            {profile.role==="admin" && <Quick icon={<Users/>} title="User Management" desc="Create and manage team accounts" onClick={()=>setSection("users")}/>}
+          <div className="sectionHeading"><div><h3>All workspace modules</h3><p>Every module available in your sidebar is accessible directly from here.</p></div></div>
+          <div style={{display:"grid",gap:22}}>
+            {navGroups.map(group=>{
+              const items=group.items.filter(item=>item.id!=="overview");
+              if(!items.length)return null;
+              return <section key={group.label} aria-label={tr(group.label)}>
+                <div style={{fontSize:12,fontWeight:800,letterSpacing:".09em",color:"#087a46",marginBottom:11}}>{tr(group.label)}</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",gap:12}}>
+                  {items.map(item=><button key={item.id} type="button" onClick={()=>setSection(item.id)} style={{display:"flex",alignItems:"center",gap:13,textAlign:"left",padding:"16px 15px",minHeight:82,border:"1px solid #e1e8ef",borderRadius:14,background:"#fff",boxShadow:"0 3px 12px rgba(16,24,40,.035)",cursor:"pointer",color:"#172b3a",transition:"transform .15s ease,box-shadow .15s ease"}}>
+                    <span style={{width:43,height:43,flex:"0 0 43px",display:"grid",placeItems:"center",borderRadius:12,background:"#eaf7f0",color:"#087a46"}}><item.icon size={20}/></span>
+                    <span style={{display:"grid",gap:5,minWidth:0,flex:1}}><b style={{fontSize:14,lineHeight:1.3}}>{tr(item.label)}</b><small style={{fontSize:11,color:"#718096",lineHeight:1.35}}>Open {tr(item.label)} module</small></span>
+                    <ArrowUpRight size={17} color="#8a9aab"/>
+                  </button>)}
+                </div>
+              </section>;
+            })}
           </div>
           <div className="sectionHeading"><div><h3>All modules</h3><p>Every option available in your sidebar, grouped by category</p></div></div>
           <div className="dashboardModuleDirectory">
