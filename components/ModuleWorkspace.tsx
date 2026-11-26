@@ -189,10 +189,67 @@ function MasterData({profile}:{profile:Profile}){
  async function add(e:React.FormEvent){e.preventDefault();const {error}=await supabase!.from("master_data").insert({category,code,label});setNotice(error?error.message:"Master data added.");if(!error){setCode("");setLabel("");await load();}}
  return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Master data</h1><p>Maintain reusable dropdown values and classifications.</p></div></div><div className="siteFormCard"><form className="siteForm" onSubmit={add}><div className="siteFields"><label>Category<input value={category} onChange={e=>setCategory(e.target.value)} required/></label><label>Code<input value={code} onChange={e=>setCode(e.target.value)} required/></label><label>Label<input value={label} onChange={e=>setLabel(e.target.value)} required/></label></div><div className="siteFormActions"><button className="primaryBtn siteSave">Add value</button></div>{notice&&<div className="siteSuccess">{notice}</div>}</form></div><div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Category</th><th>Code</th><th>Label</th><th>Status</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.category}</td><td>{r.code}</td><td>{r.label}</td><td>{r.is_active?"Active":"Inactive"}</td></tr>)}</tbody></table></div></section>;
 }
+function parseCsvRows(input:string):Record<string,any>[] {
+ const lines=input.replace(/^\\uFEFF/,"").split(/\\r?\\n/).filter(line=>line.trim().length>0);
+ if(lines.length<2) throw new Error("CSV must include a header row and at least one data row.");
+ const parseLine=(line:string)=>{
+   const cells:string[]=[];let cell="";let quoted=false;
+   for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(ch===","&&!quoted){cells.push(cell.trim());cell="";}else cell+=ch;}
+   if(quoted)throw new Error("CSV contains an unfinished quoted value.");
+   cells.push(cell.trim());return cells;
+ };
+ const headers=parseLine(lines[0]).map(h=>h.replace(/^\uFEFF/,"").trim().toLowerCase().replace(/[\\s-]+/g,"_"));
+ if(headers.some(h=>!h))throw new Error("CSV header row contains an empty column name.");
+ if(new Set(headers).size!==headers.length)throw new Error("CSV has duplicate column names. Please make each header unique.");
+ return lines.slice(1).map((line,index)=>{const cells=parseLine(line);if(cells.length>headers.length)throw new Error("CSV row "+(index+2)+" has more values than the header row.");const row:Record<string,any>={};headers.forEach((h,i)=>{const v=cells[i]??"";if(v!=="")row[h]=v;});if(!Object.keys(row).length)throw new Error("CSV row "+(index+2)+" is empty.");return row;});
+}
 function HistoricalImports({profile}:{profile:Profile}){
- const [raw,setRaw]=useState("");const [notice,setNotice]=useState("");
- async function importRows(e:React.FormEvent){e.preventDefault();if(!supabase)return;let parsed:any;try{parsed=JSON.parse(raw);}catch{setNotice("Paste a valid JSON array. Each row must match the selected table columns.");return;}if(!Array.isArray(parsed)||parsed.length===0){setNotice("Provide a non-empty JSON array.");return;}if(parsed.length>500){setNotice("Maximum 500 records per import.");return;}const allowed=["ptc_assets","general_store_items","preventive_maintenance"];const table=window.prompt("Enter target table: ptc_assets, general_store_items, preventive_maintenance");if(!table||!allowed.includes(table)){setNotice("Import cancelled or unsupported table.");return;}const {error}=await supabase.from(table).insert(parsed.map((r:any)=>({...r,created_by:profile.user_id,site_id:r.site_id||profile.site_id})));setNotice(error?"Import failed: "+error.message:"Historical records imported successfully.");}
- return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Historical imports</h1><p>Import older asset, stores or maintenance records without replacing existing data.</p></div></div><div className="siteFormCard"><form className="siteForm" onSubmit={importRows}><label>Paste JSON array<textarea rows={10} value={raw} onChange={e=>setRaw(e.target.value)} placeholder={'[{"site_id":"...","asset_name":"..."}]'} required/></label><div className="siteFormActions"><button className="primaryBtn siteSave">Validate and import</button></div>{notice&&<div className={notice.includes("successfully")?"siteSuccess":"siteError"}>{notice}</div>}</form></div><div className="siteFootnote">Use only the supported table field names. Import is additive; existing records are not deleted. Back up your data before large imports.</div></section>;
+ const [raw,setRaw]=useState("");const [notice,setNotice]=useState("");const [table,setTable]=useState("ptc_assets");const [previewCount,setPreviewCount]=useState(0);const [busy,setBusy]=useState(false);
+ const tables=[{value:"ptc_assets",label:"PTC assets"},{value:"general_store_items",label:"General Stores"},{value:"preventive_maintenance",label:"Preventive maintenance"}];
+ function parseInput(){
+   const input=raw.trim();if(!input)throw new Error("Paste or type your historical data first.");
+   let parsed:any;
+   if(input.startsWith("[")||input.startsWith("{")){
+     try{parsed=JSON.parse(input);}catch{throw new Error("Invalid JSON. Check commas, quotation marks and brackets.");}
+     if(Array.isArray(parsed)){}
+     else if(parsed&&typeof parsed==="object"){
+       const wrapped=parsed.records??parsed.rows??parsed.data??parsed.items;
+       parsed=Array.isArray(wrapped)?wrapped:[parsed];
+     }else throw new Error("JSON must contain an array of records or one record object.");
+   }else{
+     parsed=parseCsvRows(input);
+   }
+   if(!Array.isArray(parsed)||parsed.length===0)throw new Error("No records found. Provide at least one data row.");
+   if(parsed.length>500)throw new Error("Maximum 500 records per import.");
+   if(parsed.some((row:any)=>!row||typeof row!=="object"||Array.isArray(row)))throw new Error("Every imported record must be a JSON object or a CSV data row.");
+   return parsed as Record<string,any>[];
+ }
+ function validate(){
+   try{const rows=parseInput();setPreviewCount(rows.length);setNotice(rows.length+" record(s) ready. Check the selected table, then click Import records.");}
+   catch(error){setPreviewCount(0);setNotice(error instanceof Error?error.message:"Could not validate the data.");}
+ }
+ async function importRows(e:React.FormEvent){
+   e.preventDefault();if(!supabase||busy)return;
+   let rows:Record<string,any>[];
+   try{rows=parseInput();}catch(error){setPreviewCount(0);setNotice(error instanceof Error?error.message:"Could not read the data.");return;}
+   setBusy(true);setNotice("Importing "+rows.length+" record(s)...");
+   const payload=rows.map(row=>({...row,created_by:profile.user_id,site_id:row.site_id||profile.site_id}));
+   const {error}=await supabase.from(table).insert(payload);
+   if(error){setNotice("Import failed: "+error.message);setPreviewCount(rows.length);}
+   else{setNotice("Successfully imported "+rows.length+" historical record(s) into "+tables.find(x=>x.value===table)?.label+". Existing records were not changed.");setRaw("");setPreviewCount(0);}
+   setBusy(false);
+ }
+ return <section className="sitePage">
+   <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Historical imports</h1><p>Import older asset, stores or maintenance records without replacing existing data.</p></div></div>
+   <div className="siteFormCard"><form className="siteForm" onSubmit={importRows}>
+     <div className="siteFields"><label>Import into<select value={table} onChange={e=>{setTable(e.target.value);setNotice("");setPreviewCount(0);}}>{tables.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}</select></label></div>
+     <label>Paste JSON array, JSON object, or CSV<textarea rows={12} value={raw} onChange={e=>{setRaw(e.target.value);setNotice("");setPreviewCount(0);}} placeholder={'CSV example:\nasset_name,asset_type,serial_number\nGenerator,Equipment,GEN-001\n\nJSON example:\n[{"asset_name":"Generator","asset_type":"Equipment"}]'} required/></label>
+     <div className="siteFormActions"><button type="button" className="secondaryBtn" onClick={validate} disabled={busy||!raw.trim()}>Validate data</button><button className="primaryBtn siteSave" disabled={busy||!raw.trim()}>{busy?"Importing...":"Import records"}</button></div>
+     {previewCount>0&&<div className="siteSuccess">{previewCount} record(s) validated and ready to import.</div>}
+     {notice&&<div className={notice.toLowerCase().includes("fail")||notice.toLowerCase().includes("invalid")||notice.toLowerCase().includes("error")||notice.toLowerCase().includes("empty")?"siteError":"siteSuccess"}>{notice}</div>}
+   </form></div>
+   <div className="siteFootnote">Supported formats: JSON array, one JSON object, JSON wrapped in records / rows / data / items, and CSV with a header row. Maximum 500 records per import. Imports are additive; existing records are not deleted or overwritten. Use the exact database column names in your headers.</div>
+ </section>;
 }
 function AskData(){
  const [q,setQ]=useState("");
