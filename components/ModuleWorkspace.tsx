@@ -36,7 +36,7 @@ const configs: Record<string, Config> = {
 
 const empty = (fields: Field[]) => Object.fromEntries(fields.map(f => [f.key, f.type === "select" ? (f.options?.[0] || "") : ""])) as Record<string,string>;
 
-export default function ModuleWorkspace({ section, profile, sites }: { section: string; profile: Profile; sites: Site[] }) {
+export default function ModuleWorkspace({ section, profile, sites, onNavigate }: { section: string; profile: Profile; sites: Site[]; onNavigate: (section:string)=>void }) {
   const config = configs[section];
   const [rows,setRows] = useState<any[]>([]);
   const [loading,setLoading] = useState(false);
@@ -48,6 +48,8 @@ export default function ModuleWorkspace({ section, profile, sites }: { section: 
   const [siteId,setSiteId] = useState(profile.site_id || "");
   const [search,setSearch] = useState("");
   const [chatText,setChatText] = useState("");
+  const [recipientId,setRecipientId] = useState("");
+  const [chatUsers,setChatUsers] = useState<any[]>([]);
   const [chatRows,setChatRows] = useState<any[]>([]);
   const [settingName,setSettingName] = useState("PTC Garage Management");
   const [settingColor,setSettingColor] = useState("#087a46");
@@ -72,7 +74,9 @@ export default function ModuleWorkspace({ section, profile, sites }: { section: 
     await supabase.from("audit_logs").insert({user_id:profile.user_id,action,module,record_id:id,details});
   }
   useEffect(()=>{ if(config){setSiteId(profile.site_id||""); void load();} },[section,profile.user_id,siteId]);
-  useEffect(()=>{ if(section==="private-chat") void loadChat(); if(section==="notifications") void loadNotifications(); },[section]);
+  useEffect(()=>{ if(section==="private-chat"){void loadChat();void loadChatUsers();} if(section==="notifications") void loadNotifications(); if(section==="settings") void loadSettings(); },[section]);
+  async function loadChatUsers(){if(!supabase)return;const {data}=await supabase.from("profiles").select("user_id,username,full_name,role,is_active").eq("is_active",true).order("full_name");setChatUsers((data||[]).filter((u:any)=>u.user_id!==profile.user_id));}
+  async function loadSettings(){if(!supabase)return;const {data}=await supabase.from("app_settings").select("setting_key,setting_value");(data||[]).forEach((r:any)=>{const v=r.setting_value?.value;if(r.setting_key==="app_name"&&v)setSettingName(v);if(r.setting_key==="primary_color"&&v)setSettingColor(v);if(r.setting_key==="language"&&v)setSettingLanguage(v);});}
   async function loadChat() {
     if(!supabase)return;
     const {data,error}=await supabase.from("private_messages").select("*").order("created_at",{ascending:true}).limit(200);
@@ -80,7 +84,7 @@ export default function ModuleWorkspace({ section, profile, sites }: { section: 
   }
   async function sendChat(e:React.FormEvent) {
     e.preventDefault(); if(!supabase||!chatText.trim())return;
-    const {error}=await supabase.from("private_messages").insert({sender_id:profile.user_id,recipient_id:null,message:chatText.trim()});
+    const {error}=await supabase.from("private_messages").insert({sender_id:profile.user_id,recipient_id:recipientId||null,message:chatText.trim()});
     if(error)setMessage("Could not send message: "+error.message); else {setChatText("");await loadChat();}
   }
   async function loadNotifications(){
@@ -135,15 +139,15 @@ export default function ModuleWorkspace({ section, profile, sites }: { section: 
     </section>;
   }
 
-  if(section==="private-chat")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">COLLABORATION</span><h1>Private chat</h1><p>Internal team messages. Broadcast messages are visible to signed-in team members.</p></div><button className="refreshBtn" onClick={loadChat}>Refresh</button></div>
-    {message&&<div className="siteError">{message}</div>}<div className="chatPanel"><div className="chatMessages">{chatRows.map(m=><div className={m.sender_id===profile.user_id?"chatBubble mine":"chatBubble"} key={m.id}><p>{m.message}</p><small>{new Date(m.created_at).toLocaleString()}</small></div>)}{chatRows.length===0&&<p className="muted">No messages yet.</p>}</div><form onSubmit={sendChat} className="chatComposer"><textarea value={chatText} onChange={e=>setChatText(e.target.value)} placeholder="Write a team message..." maxLength={4000} required/><button className="primaryBtn siteSave">Send message</button></form></div>
+  if(section==="private-chat")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">COLLABORATION</span><h1>Private chat</h1><p>Send a direct message to one team member, or leave recipient as Team broadcast.</p></div><button className="refreshBtn" onClick={loadChat}>Refresh</button></div>
+    {message&&<div className="siteError">{message}</div>}<div className="chatPanel"><div className="chatMessages">{chatRows.map(m=><div className={m.sender_id===profile.user_id?"chatBubble mine":"chatBubble"} key={m.id}><p>{m.message}</p><small>{new Date(m.created_at).toLocaleString()}</small></div>)}{chatRows.length===0&&<p className="muted">No messages yet.</p>}</div><form onSubmit={sendChat} className="chatComposer"><select aria-label="Message recipient" value={recipientId} onChange={e=>setRecipientId(e.target.value)}><option value="">Team broadcast</option>{chatUsers.map(u=><option key={u.user_id} value={u.user_id}>{u.full_name} · {u.username||u.role}</option>)}</select><textarea value={chatText} onChange={e=>setChatText(e.target.value)} placeholder="Write a team message..." maxLength={4000} required/><button className="primaryBtn siteSave">Send message</button></form></div>
   </section>;
 
   if(section==="notifications")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">OVERVIEW</span><h1>Notifications</h1><p>Your account notifications and updates.</p></div><button className="refreshBtn" onClick={loadNotifications}>Refresh</button></div><div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Time</th><th>Notification</th><th>Message</th><th>Status</th><th/></tr></thead><tbody>{rows.map(n=><tr key={n.id}><td>{new Date(n.created_at).toLocaleString()}</td><td>{n.title}</td><td>{n.message}</td><td>{n.is_read?"Read":"Unread"}</td><td>{!n.is_read&&<button className="iconAction" onClick={async()=>{await supabase?.from("notifications").update({is_read:true}).eq("id",n.id);await loadNotifications();}}>Mark read</button>}</td></tr>)}</tbody></table></div>{rows.length===0&&<div className="siteEmpty">No notifications yet.</div>}</section>;
 
   if(section==="my-profile")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">ACCOUNT</span><h1>My profile</h1><p>Your current sign-in and access information.</p></div></div><div className="profileSummary"><div><small>FULL NAME</small><b>{profile.full_name}</b></div><div><small>USER ID</small><b>{profile.username||"—"}</b></div><div><small>ROLE</small><b>{profile.role}</b></div><div><small>ASSIGNED SITE</small><b>{profile.role==="admin"?"All sites":siteName(profile.site_id)}</b></div></div></section>;
 
-  if(section==="home"||section==="my-actions")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">OVERVIEW</span><h1>{section==="home"?"Workspace home":"My actions"}</h1><p>{section==="home"?"Shortcuts to the main garage workflows.":"Tasks and records that need your attention."}</p></div></div><div className="moduleQuickLinks"><button onClick={()=>location.hash="#vehicle-in"}>Vehicle IN</button><button onClick={()=>location.hash="#parts-order"}>Parts Orders</button><button onClick={()=>location.hash="#breakdowns"}>Breakdowns</button><button onClick={()=>location.hash="#maintenance"}>Preventive Maintenance</button></div><p className="siteFootnote">Use the sidebar to open a module. Assigned-site and role permissions remain active.</p></section>;
+  if(section==="home"||section==="my-actions")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">OVERVIEW</span><h1>{section==="home"?"Workspace home":"My actions"}</h1><p>{section==="home"?"Shortcuts to the main garage workflows.":"Tasks and records that need your attention."}</p></div></div><div className="moduleQuickLinks"><button onClick={()=>onNavigate("vehicle-in")}>Vehicle IN</button><button onClick={()=>onNavigate("parts-order")}>Parts Orders</button><button onClick={()=>onNavigate("breakdowns")}>Breakdowns</button><button onClick={()=>onNavigate("maintenance")}>Preventive Maintenance</button></div><p className="siteFootnote">Use the sidebar to open a module. Assigned-site and role permissions remain active.</p></section>;
 
   if(section==="roles-permissions")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Roles and permissions</h1><p>Core role boundaries are protected at database level.</p></div></div><div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Role</th><th>Access</th><th>Site scope</th><th>Security</th></tr></thead><tbody><tr><td>Admin</td><td>All modules and administration</td><td>All sites</td><td>Full access</td></tr><tr><td>Supervisor</td><td>Vehicles, breakdowns, maintenance, parts, tasks</td><td>Assigned site only</td><td>RLS enforced</td></tr><tr><td>Store Keeper</td><td>Parts orders, receipts, general stores</td><td>All sites; no vehicle records</td><td>RLS enforced</td></tr></tbody></table></div><div className="siteFootnote">Changing core role access requires a reviewed database policy migration. This prevents an Admin from accidentally granting vehicle data access to a Store Keeper.</div></section>;
 
