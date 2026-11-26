@@ -190,7 +190,7 @@ function MasterData({profile}:{profile:Profile}){
  return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Master data</h1><p>Maintain reusable dropdown values and classifications.</p></div></div><div className="siteFormCard"><form className="siteForm" onSubmit={add}><div className="siteFields"><label>Category<input value={category} onChange={e=>setCategory(e.target.value)} required/></label><label>Code<input value={code} onChange={e=>setCode(e.target.value)} required/></label><label>Label<input value={label} onChange={e=>setLabel(e.target.value)} required/></label></div><div className="siteFormActions"><button className="primaryBtn siteSave">Add value</button></div>{notice&&<div className="siteSuccess">{notice}</div>}</form></div><div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Category</th><th>Code</th><th>Label</th><th>Status</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.category}</td><td>{r.code}</td><td>{r.label}</td><td>{r.is_active?"Active":"Inactive"}</td></tr>)}</tbody></table></div></section>;
 }
 function parseCsvRows(input:string):Record<string,any>[] {
- const lines=input.replace(/^\\uFEFF/,"").split(/\\r?\\n/).filter(line=>line.trim().length>0);
+ const lines=input.replace(/^\uFEFF/,"").split(/\r?\n/).filter(line=>line.trim().length>0);
  if(lines.length<2) throw new Error("CSV must include a header row and at least one data row.");
  const parseLine=(line:string)=>{
    const cells:string[]=[];let cell="";let quoted=false;
@@ -198,7 +198,7 @@ function parseCsvRows(input:string):Record<string,any>[] {
    if(quoted)throw new Error("CSV contains an unfinished quoted value.");
    cells.push(cell.trim());return cells;
  };
- const headers=parseLine(lines[0]).map(h=>h.replace(/^\uFEFF/,"").trim().toLowerCase().replace(/[\\s-]+/g,"_"));
+ const headers=parseLine(lines[0]).map(h=>h.replace(/^\uFEFF/,"").trim().toLowerCase().replace(/[\s-]+/g,"_"));
  if(headers.some(h=>!h))throw new Error("CSV header row contains an empty column name.");
  if(new Set(headers).size!==headers.length)throw new Error("CSV has duplicate column names. Please make each header unique.");
  return lines.slice(1).map((line,index)=>{const cells=parseLine(line);if(cells.length>headers.length)throw new Error("CSV row "+(index+2)+" has more values than the header row.");const row:Record<string,any>={};headers.forEach((h,i)=>{const v=cells[i]??"";if(v!=="")row[h]=v;});if(!Object.keys(row).length)throw new Error("CSV row "+(index+2)+" is empty.");return row;});
