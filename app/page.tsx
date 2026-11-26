@@ -135,7 +135,7 @@ export default function Home() {
 
   async function loadEmployeeDirectory() {
     if (!supabase) return;
-    setEmployeesLoading(true); setEmployeeMessage("");
+    setEmployeesLoading(true);
     const { data, error } = await supabase.from("employee_directory").select("*").order("full_name", { ascending: true });
     if (error) setEmployeeMessage("Could not load employee directory: " + error.message);
     else setEmployees((data || []) as EmployeeRecord[]);
@@ -237,7 +237,7 @@ export default function Home() {
   useEffect(() => { void loadProfile(); }, []);
   useEffect(() => { if (profile?.role === "admin" && section === "sites") void loadSites(); }, [profile, section]);
   useEffect(() => { if (profile?.role === "admin" && section === "users") { void loadSites(); void loadTeamUsers(); } }, [profile, section]);
-  useEffect(() => { if (profile?.role === "admin" && section === "employee-directory") { void loadSites(); void loadTeamUsers(); void loadEmployeeDirectory(); } }, [profile, section]);
+  useEffect(() => { if (profile?.role === "admin" && section === "employee-directory") { setEmployeeMessage(""); void loadSites(); void loadTeamUsers(); void loadEmployeeDirectory(); } }, [profile, section]);
   useEffect(()=>{if(profile&&["parts-order","orders","parts-receive","receipts"].includes(section)){void loadPartsOrders();if(profile.role!=="storekeeper"){void loadVehicles();if(profile.role==="admin")void loadSites();}}},[profile,section]);
   useEffect(() => {
     if (profile && ["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && profile.role !== "storekeeper") {
@@ -617,7 +617,7 @@ export default function Home() {
           </>}
         </section>}
         {section==="employee-directory" && profile.role==="admin" && <section className="sitePage">
-          <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Employee Directory</h1><p>Manage every garage and support employee, whether they have an app login or not.</p></div><div className="siteActions"><button className="refreshBtn" onClick={()=>{void loadEmployeeDirectory();void loadTeamUsers();}}><RefreshCw size={16}/> Refresh</button><button className="primaryBtn siteSave" onClick={startNewEmployee}><Plus size={16}/> Add Employee</button></div></div>
+          <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Employee Directory</h1><p>Manage every garage and support employee, whether they have an app login or not.</p></div><div className="siteActions"><button className="refreshBtn" onClick={()=>{setEmployeeMessage("");void loadEmployeeDirectory();void loadTeamUsers();}}><RefreshCw size={16}/> Refresh</button><button className="primaryBtn siteSave" onClick={startNewEmployee}><Plus size={16}/> Add Employee</button></div></div>
           {employeeFormOpen && <div className="siteFormCard">
             <div className="siteFormTitle"><div className="siteIcon"><ContactRound size={20}/></div><div><h3>{editingEmployee?"Edit employee details":"Add a new employee"}</h3><p>Login account is optional. You can create the employee record now and link an account later.</p></div></div>
             <form className="siteForm" onSubmit={saveEmployee}>
