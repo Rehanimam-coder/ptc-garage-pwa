@@ -40,3 +40,16 @@
 .partsTable{min-width:1050px}
 @media(max-width:900px){.partLine .siteFields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.partLinesHeading,.partLineTop{align-items:flex-start;flex-direction:column}.partLine .siteFields{grid-template-columns:1fr}.storeEditForm{min-width:155px}}
+
+
+/* Clear vehicle identification and consistent professional hover states */
+.ptcIdTag{display:inline-flex;align-items:center;justify-content:center;min-width:74px;padding:6px 9px;border:1px solid #cfe8da;border-radius:6px;background:#edf8f1;color:#18794e;font-size:10px;font-weight:800;letter-spacing:.25px;white-space:nowrap}
+.navItem,.quickCard,.statCard,.siteFormCard,.siteTable tbody tr,.filterBtn,.filterActive,.secondaryBtn,.iconAction,.refreshBtn,.logoutBtn{transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease,color .18s ease}
+.navItem:hover{background:#ffffff1c;transform:translateX(2px)}
+.siteTable tbody tr:hover{background:#f7fbf8}
+.siteFormCard:hover,.statCard:hover{border-color:#d3e7dc;box-shadow:0 8px 22px #183d5510}
+.filterBtn:hover,.secondaryBtn:hover,.refreshBtn:hover,.iconAction:hover{border-color:#9acdb5;color:#18794e;background:#f7fcf9}
+.logoutBtn:hover{color:#fff;background:#ffffff10;border-radius:7px}
+.siteFields input:hover,.siteFields select:hover,.partLine input:hover,.partLine select:hover,.storeEditForm input:hover,.storeEditForm select:hover{border-color:#a9cdb9}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #22a06b35;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
