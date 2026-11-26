@@ -7,7 +7,8 @@ import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, Loc
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null; is_active: boolean };
 type Counts = { inGarage: number; openOrders: number; receivedToday: number; users: number };
 type Site = { id: string; name: string; code: string; address: string | null; is_active: boolean; created_at?: string };
-type Vehicle = { id: string; site_id: string; ptc_id: string | null; vehicle_type: string; complaint: string; work_description: string | null; purpose_of_visit: string | null; status: "IN" | "OUT"; in_at: string; out_at: string | null; in_remark: string | null; out_remark: string | null };
+type WorkDetail = { name: string; designation: string; work_done: string };
+type Vehicle = { id: string; site_id: string; ptc_id: string | null; vehicle_type: string; complaint: string; work_description: string | null; purpose_of_visit: string | null; status: "IN" | "OUT"; in_at: string; out_at: string | null; in_remark: string | null; out_remark: string | null; work_details?: WorkDetail[] };
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -40,6 +41,7 @@ export default function Home() {
   const [inRemark, setInRemark] = useState("");
   const [selectedOutId, setSelectedOutId] = useState("");
   const [outRemark, setOutRemark] = useState("");
+  const [workTeam, setWorkTeam] = useState<WorkDetail[]>([{ name: "", designation: "", work_done: "" }]);
   const [vehicleFilter, setVehicleFilter] = useState("IN");
 
   const configured = Boolean(supabase);
@@ -170,15 +172,16 @@ export default function Home() {
   async function saveVehicleOut(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase || !profile || !selectedOutId) { setVehicleMessage("Please select a vehicle to release."); return; }
+    if (workTeam.some(w => !w.name.trim() || !w.designation.trim() || !w.work_done.trim())) { setVehicleMessage("Please complete name, designation and work done for every staff member, or remove the empty row."); return; }
     setVehicleSaving(true); setVehicleMessage("");
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from("vehicle_visits").update({
-      status: "OUT", out_at: new Date().toISOString(), released_by: user?.id, out_remark: outRemark.trim() || null
+      status: "OUT", out_at: new Date().toISOString(), released_by: user?.id, out_remark: outRemark.trim() || null, work_details: workTeam.map(w => ({name:w.name.trim(), designation:w.designation.trim(), work_done:w.work_done.trim()}))
     }).eq("id", selectedOutId).eq("status", "IN");
     if (error) setVehicleMessage("Could not register Vehicle OUT: " + error.message);
     else {
       setVehicleMessage("Vehicle OUT confirmed successfully.");
-      setSelectedOutId(""); setOutRemark(""); await loadVehicles(); await loadCounts(profile);
+      setSelectedOutId(""); setOutRemark(""); setWorkTeam([{name:"",designation:"",work_done:""}]); await loadVehicles(); await loadCounts(profile);
     }
     setVehicleSaving(false);
   }
@@ -259,16 +262,16 @@ export default function Home() {
               <form className="siteForm" onSubmit={saveVehicleOut}>
                 <div className="siteFields">
                   <label className="siteAddress">Select vehicle<select value={selectedOutId} onChange={e=>setSelectedOutId(e.target.value)} required><option value="">Select vehicle currently IN</option>{vehicles.filter(v=>v.status==="IN").map(v=><option key={v.id} value={v.id}>{v.ptc_id || "No PTC ID"} · {v.vehicle_type} · {v.complaint}</option>)}</select></label>
-                  <label className="siteAddress">OUT Remarks<input value={outRemark} onChange={e=>setOutRemark(e.target.value)} placeholder="Work completed / release remarks"/></label>
+                  <div className="siteAddress workTeamBlock"><div className="workTeamHeading"><b>Staff who worked on this vehicle</b><button type="button" className="secondaryBtn" onClick={()=>setWorkTeam([...workTeam,{name:"",designation:"",work_done:""}])}><Plus size={15}/> Add staff</button></div>{workTeam.map((worker,index)=><div className="workTeamRow" key={index}><label>Staff name<input value={worker.name} onChange={e=>setWorkTeam(workTeam.map((w,i)=>i===index?{...w,name:e.target.value}:w))} placeholder="Enter employee name" required/></label><label>Designation<input value={worker.designation} onChange={e=>setWorkTeam(workTeam.map((w,i)=>i===index?{...w,designation:e.target.value}:w))} placeholder="e.g. Mechanic" required/></label><label>Work done<input value={worker.work_done} onChange={e=>setWorkTeam(workTeam.map((w,i)=>i===index?{...w,work_done:e.target.value}:w))} placeholder="Describe work completed" required/></label>{workTeam.length>1&&<button type="button" className="iconAction deactivate" onClick={()=>setWorkTeam(workTeam.filter((_,i)=>i!==index))}><X size={15}/> Remove</button>}</div>)}</div><label className="siteAddress">OUT Remarks<input value={outRemark} onChange={e=>setOutRemark(e.target.value)} placeholder="Final inspection / release remarks"/></label>
                 </div>
                 <div className="siteFormActions"><button className="primaryBtn siteSave" disabled={vehicleSaving || !selectedOutId}>{vehicleSaving?"Saving...":"Confirm Vehicle OUT"} <ArrowUpRight size={17}/></button></div>
               </form>
             </div>
           </div>
           <div className="siteListHeader"><div><h3>Vehicle records</h3><p>{vehicles.filter(v=>v.status==="IN").length} currently in garage · {vehicles.length} total records</p></div><div className="vehicleFilters"><button className={vehicleFilter==="IN"?"filterActive":"filterBtn"} onClick={()=>setVehicleFilter("IN")}>Currently IN</button><button className={vehicleFilter==="OUT"?"filterActive":"filterBtn"} onClick={()=>setVehicleFilter("OUT")}>Vehicle OUT</button><button className={vehicleFilter==="ALL"?"filterActive":"filterBtn"} onClick={()=>setVehicleFilter("ALL")}>All History</button></div></div>
-          {vehicleLoading?<div className="siteEmpty"><div className="spinner"/> Loading vehicle records...</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>PTC ID</th><th>Vehicle Type</th><th>Complaint</th><th>IN Date / Time</th><th>OUT Date / Time</th><th>Garage Duration</th><th>Status</th></tr></thead><tbody>
-            {vehicles.filter(v=>vehicleFilter==="ALL" || v.status===vehicleFilter).map(v=><tr key={v.id}><td><b>{v.ptc_id||"—"}</b></td><td>{v.vehicle_type}</td><td>{v.complaint}</td><td>{new Date(v.in_at).toLocaleString()}</td><td>{v.out_at?new Date(v.out_at).toLocaleString():"—"}</td><td>{formatDuration(v.in_at,v.out_at)}</td><td><span className={v.status==="IN"?"statusActive":"statusInactive"}>{v.status}</span></td></tr>)}
-            {vehicles.filter(v=>vehicleFilter==="ALL" || v.status===vehicleFilter).length===0 && <tr><td colSpan={7}>No vehicle records found.</td></tr>}
+          {vehicleLoading?<div className="siteEmpty"><div className="spinner"/> Loading vehicle records...</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>PTC ID</th><th>Vehicle Type</th><th>Complaint</th><th>IN Date / Time</th><th>OUT Date / Time</th><th>Garage Duration</th><th>Work Details</th><th>Status</th></tr></thead><tbody>
+            {vehicles.filter(v=>vehicleFilter==="ALL" || v.status===vehicleFilter).map(v=><tr key={v.id}><td><b>{v.ptc_id||"—"}</b></td><td>{v.vehicle_type}</td><td>{v.complaint}</td><td>{new Date(v.in_at).toLocaleString()}</td><td>{v.out_at?new Date(v.out_at).toLocaleString():"—"}</td><td>{formatDuration(v.in_at,v.out_at)}</td><td>{v.work_details?.length ? v.work_details.map(w=>`${w.name} (${w.designation}): ${w.work_done}`).join("; ") : "—"}</td><td><span className={v.status==="IN"?"statusActive":"statusInactive"}>{v.status}</span></td></tr>)}
+            {vehicles.filter(v=>vehicleFilter==="ALL" || v.status===vehicleFilter).length===0 && <tr><td colSpan={8}>No vehicle records found.</td></tr>}
           </tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> {profile.role==="admin"?"You can view vehicle movements across all sites.":"You can view vehicle movements for your assigned site only."} IN / OUT timestamps are recorded automatically.</div>
         </section>}
