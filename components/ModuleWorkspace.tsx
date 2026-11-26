@@ -195,9 +195,79 @@ function HistoricalImports({profile}:{profile:Profile}){
  return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Historical imports</h1><p>Import older asset, stores or maintenance records without replacing existing data.</p></div></div><div className="siteFormCard"><form className="siteForm" onSubmit={importRows}><label>Paste JSON array<textarea rows={10} value={raw} onChange={e=>setRaw(e.target.value)} placeholder={'[{"site_id":"...","asset_name":"..."}]'} required/></label><div className="siteFormActions"><button className="primaryBtn siteSave">Validate and import</button></div>{notice&&<div className={notice.includes("successfully")?"siteSuccess":"siteError"}>{notice}</div>}</form></div><div className="siteFootnote">Use only the supported table field names. Import is additive; existing records are not deleted. Back up your data before large imports.</div></section>;
 }
 function AskData(){
- const [q,setQ]=useState("");const [result,setResult]=useState<any[]>([]);const [busy,setBusy]=useState(false);
- async function search(e:React.FormEvent){e.preventDefault();if(!q.trim())return;setBusy(true);const terms=q.trim();const tables=["vehicle_visits","parts_orders","breakdown_jobs","preventive_maintenance","ptc_assets"];const res=await Promise.all(tables.map(async table=>{const {data}=await supabase!.from(table).select("*").limit(300);return (data||[]).filter((r:any)=>JSON.stringify(r).toLowerCase().includes(terms.toLowerCase())).map((r:any)=>({table,...r}));}));setResult(res.flat().slice(0,100));setBusy(false);}
- return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">PTC DATA ASSISTANT</span><h1>Ask PTC data</h1><p>Search across garage records using a plain keyword or PTC ID.</p></div></div><form className="moduleToolbar" onSubmit={search}><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search PTC ID, part, complaint, task..." required/><button className="primaryBtn siteSave" disabled={busy}>{busy?"Searching...":"Search records"}</button></form><div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Source</th><th>Record</th><th>Details</th></tr></thead><tbody>{result.map((r,i)=><tr key={i}><td>{r.table}</td><td>{r.ptc_id||r.part_name||r.asset_name||r.maintenance_work||r.id}</td><td>{JSON.stringify(r)}</td></tr>)}</tbody></table></div></section>;
+ const [q,setQ]=useState("");
+ const [result,setResult]=useState<any[]>([]);
+ const [busy,setBusy]=useState(false);
+ const [searched,setSearched]=useState(false);
+ const [error,setError]=useState("");
+ const sourceNames:Record<string,string>={vehicle_visits:"Vehicle IN / OUT",parts_orders:"Parts orders",breakdown_jobs:"Breakdown jobs",preventive_maintenance:"Preventive maintenance",ptc_assets:"PTC assets"};
+ const labels:Record<string,string>={ptc_id:"PTC ID",vehicle_type:"Vehicle / Equipment",purpose_of_visit:"Visit purpose",complaint:"Problem / Complaint",work_description:"Work description",status:"Status",in_at:"Vehicle IN",out_at:"Vehicle OUT",in_remark:"IN remarks",out_remark:"OUT remarks",part_name:"Part name",part_number:"Part number",quantity:"Quantity",order_status:"Order status",request_number:"Request number",invoice_number:"Invoice number",maintenance_work:"Maintenance work",expected_due_date:"Due date",repeat_by:"Schedule type",repeat_interval:"Repeat interval",asset_name:"Asset name",asset_type:"Asset type",serial_number:"Serial number",make_model:"Make / Model",priority:"Priority",assigned_to:"Assigned to",started_at:"Work started",completed_at:"Completed",remarks:"Remarks",created_at:"Created",updated_at:"Last updated",site_id:"Site ID",created_by:"Created by"};
+ const important=["ptc_id","vehicle_type","asset_name","part_name","part_number","maintenance_work","complaint","work_description","purpose_of_visit","status","order_status","priority","request_number","invoice_number","quantity","site_id","in_at","out_at","expected_due_date","created_at"];
+ const label=(key:string)=>labels[key]||key.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+ const value=(key:string,v:any)=>{
+   if(v===null||v===undefined||v==="")return "—";
+   if(typeof v==="boolean")return v?"Yes":"No";
+   if(Array.isArray(v))return v.length?v.map((item:any)=>typeof item==="object"?Object.entries(item).map(([k,x])=>label(k)+": "+String(x??"—")).join(" · "):String(item)).join(" | "):"—";
+   if(typeof v==="object")return Object.entries(v).map(([k,x])=>label(k)+": "+String(x??"—")).join(" · ")||"—";
+   if(/(^|_)(at|date|time)$/.test(key)&&!Number.isNaN(Date.parse(String(v))))return new Date(v).toLocaleString();
+   return String(v);
+ };
+ const cardStyle:React.CSSProperties={background:"#fff",border:"1px solid #e4e9ee",borderRadius:14,padding:18,boxShadow:"0 3px 12px rgba(16,24,40,.04)"};
+ const fieldStyle:React.CSSProperties={background:"#f7f9fb",borderRadius:10,padding:"10px 12px",minWidth:0};
+ async function search(e:React.FormEvent){
+   e.preventDefault();if(!q.trim()||!supabase)return;
+   setBusy(true);setError("");setSearched(true);
+   const terms=q.trim();
+   const tables=["vehicle_visits","parts_orders","breakdown_jobs","preventive_maintenance","ptc_assets"];
+   const responses=await Promise.all(tables.map(async table=>{
+     const {data,error}=await supabase.from(table).select("*").limit(500);
+     if(error)return {table,error:error.message,rows:[] as any[]};
+     return {table,error:"",rows:(data||[]).filter((r:any)=>JSON.stringify(r).toLowerCase().includes(terms.toLowerCase()))};
+   }));
+   const failures=responses.filter(x=>x.error);
+   const found=responses.flatMap(x=>x.rows.map((r:any)=>({table:x.table,...r})));
+   setResult(found.slice(0,100));
+   if(failures.length===tables.length)setError("Could not search records. Please check your database connection and access permissions.");
+   else if(failures.length)setError("Some record categories could not be searched. Results below may be incomplete.");
+   setBusy(false);
+ }
+ return <section className="sitePage">
+   <div className="siteIntro"><div><span className="eyebrow dark">PTC DATA ASSISTANT</span><h1>Ask PTC Data</h1><p>Search vehicle, breakdown, maintenance, parts and asset records using a PTC ID or keyword.</p></div></div>
+   <form onSubmit={search} style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",background:"#fff",border:"1px solid #e4e9ee",borderRadius:14,padding:14,marginBottom:18}}>
+     <input style={{flex:"1 1 260px",minWidth:0}} value={q} onChange={e=>setQ(e.target.value)} placeholder="Search PTC ID, vehicle, part, complaint or request number..." required/>
+     <button className="primaryBtn siteSave" disabled={busy}>{busy?"Searching...":"Search records"}</button>
+     <button type="button" className="secondaryBtn" disabled={busy||!q} onClick={()=>{setQ("");setResult([]);setSearched(false);setError("");}}>Clear</button>
+   </form>
+   {error&&<div className="siteError" style={{marginBottom:14}}>{error}</div>}
+   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,margin:"8px 0 14px",flexWrap:"wrap"}}>
+     <div><h3 style={{margin:0,fontSize:18,color:"#172b3a"}}>{searched?"Search results":"Ready to search"}</h3><p style={{margin:"4px 0 0",color:"#718096",fontSize:13}}>{busy?"Searching available records...":searched?(result.length+" record"+(result.length===1?"":"s")+" found"+(result.length===100?" (showing first 100)":"")):"Enter a PTC ID or keyword to find matching records."}</p></div>
+     {result.length>0&&<span className="siteCount">{result.length} Results</span>}
+   </div>
+   {busy?<div className="siteEmpty">Searching records...</div>:result.length===0&&searched?<div className="siteEmpty">No matching records found. Try another PTC ID or keyword.</div>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,420px),1fr))",gap:14}}>
+     {result.map((r,i)=>{
+       const id=String(r.id||r.table+"-"+i);
+       const headline=r.ptc_id||r.part_name||r.asset_name||r.maintenance_work||r.request_number||r.complaint||("Record "+(i+1));
+       const mainKeys=important.filter(k=>r[k]!==null&&r[k]!==undefined&&r[k]!==""&&k!=="created_at"&&k!=="site_id");
+       const shown=mainKeys.slice(0,6);
+       return <article key={r.table+"-"+id} style={cardStyle}>
+         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:13}}>
+           <div style={{minWidth:0}}><span style={{fontSize:11,fontWeight:700,letterSpacing:".07em",color:"#087a46",textTransform:"uppercase"}}>{sourceNames[r.table]||r.table.replace(/_/g," ")}</span><h3 style={{margin:"5px 0 0",fontSize:19,color:"#172b3a",overflowWrap:"anywhere"}}>{String(headline)}</h3></div>
+           <span style={{fontSize:11,fontWeight:700,background:/complete|received|out|active/i.test(String(r.status||r.order_status||""))?"#e7f6ed":"#eef3f8",color:/complete|received|out|active/i.test(String(r.status||r.order_status||""))?"#187044":"#425466",borderRadius:20,padding:"6px 10px",whiteSpace:"nowrap"}}>{String(r.status||r.order_status||"Record")}</span>
+         </div>
+         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:8}}>
+           {shown.map(k=><div key={k} style={fieldStyle}><div style={{fontSize:10,fontWeight:700,color:"#718096",textTransform:"uppercase",marginBottom:4}}>{label(k)}</div><div style={{fontSize:13,color:"#243746",overflowWrap:"anywhere",fontWeight:600}}>{value(k,r[k])}</div></div>)}
+         </div>
+         <details style={{marginTop:13,borderTop:"1px solid #edf0f3",paddingTop:10}}>
+           <summary style={{cursor:"pointer",fontWeight:700,fontSize:13,color:"#087a46",outline:"none"}}>View complete record details</summary>
+           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8,marginTop:12}}>
+             {Object.entries(r).filter(([k,v])=>v!==null&&v!==undefined&&v!=="").map(([k,v])=><div key={k} style={fieldStyle}><div style={{fontSize:10,fontWeight:700,color:"#718096",textTransform:"uppercase",marginBottom:4}}>{label(k)}</div><div style={{fontSize:13,color:"#243746",overflowWrap:"anywhere",whiteSpace:"pre-wrap"}}>{value(k,v)}</div></div>)}
+           </div>
+         </details>
+       </article>;
+     })}
+   </div>}
+   <div className="siteFootnote" style={{marginTop:18}}>Search results show only records permitted by your signed-in account and Supabase access policies. This screen does not edit or delete any records.</div>
+ </section>;
 }
 function CentralReports({profile,sites}:{profile:Profile;sites:Site[]}){
  const [summary,setSummary]=useState<any[]>([]);
