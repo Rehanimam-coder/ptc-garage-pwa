@@ -36,6 +36,7 @@ export default function Home() {
   const [complaint, setComplaint] = useState("");
   const [workDescription, setWorkDescription] = useState("");
   const [visitPurpose, setVisitPurpose] = useState("");
+  const [visitPurposeOther, setVisitPurposeOther] = useState("");
   const [inRemark, setInRemark] = useState("");
   const [selectedOutId, setSelectedOutId] = useState("");
   const [outRemark, setOutRemark] = useState("");
@@ -147,18 +148,20 @@ export default function Home() {
     const siteId = profile.role === "admin" ? vehicleSiteId : profile.site_id;
     if (!siteId) { setVehicleMessage("Please select a site. Ask Admin to assign your site if you are a Supervisor."); return; }
     if (!vehicleType.trim() || !complaint.trim()) { setVehicleMessage("Vehicle type and complaint are required."); return; }
+    if (!visitPurpose) { setVehicleMessage("Please select the Purpose of Visit."); return; }
+    if (visitPurpose === "Other" && !visitPurposeOther.trim()) { setVehicleMessage("Please enter details for Other purpose."); return; }
     setVehicleSaving(true); setVehicleMessage("");
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from("vehicle_visits").insert({
       site_id: siteId, ptc_id: ptcId.trim() || null, vehicle_type: vehicleType.trim(),
       complaint: complaint.trim(), work_description: workDescription.trim() || null,
-      purpose_of_visit: visitPurpose.trim() || null, in_remark: inRemark.trim() || null,
+      purpose_of_visit: visitPurpose === "Other" ? "Other: " + visitPurposeOther.trim() : visitPurpose, in_remark: inRemark.trim() || null,
       received_by: user?.id
     });
     if (error) setVehicleMessage("Could not register Vehicle IN: " + error.message);
     else {
       setVehicleMessage("Vehicle IN registered successfully.");
-      setPtcId(""); setVehicleType(""); setComplaint(""); setWorkDescription(""); setVisitPurpose(""); setInRemark("");
+      setPtcId(""); setVehicleType(""); setComplaint(""); setWorkDescription(""); setVisitPurpose(""); setVisitPurposeOther(""); setInRemark("");
       await loadVehicles(); await loadCounts(profile);
     }
     setVehicleSaving(false);
@@ -244,7 +247,8 @@ export default function Home() {
                   <label>Vehicle Type<input value={vehicleType} onChange={e=>setVehicleType(e.target.value)} placeholder="e.g. Bus / Van / Pickup" required/></label>
                   <label>Complaint<input value={complaint} onChange={e=>setComplaint(e.target.value)} placeholder="Reason for garage visit" required/></label>
                   <label>Work Description<input value={workDescription} onChange={e=>setWorkDescription(e.target.value)} placeholder="Work to be carried out"/></label>
-                  <label>Purpose of Visit<input value={visitPurpose} onChange={e=>setVisitPurpose(e.target.value)} placeholder="Optional"/></label>
+                  <label>Purpose of Visit<select value={visitPurpose} onChange={e=>{setVisitPurpose(e.target.value);setVisitPurposeOther("");}} required><option value="">Select purpose</option><option>Vehicle Breakdown</option><option>Preventive Maintenance (PM)</option><option>Maintenance</option><option>Tyre Replacement / Repair</option><option>Electrical Work</option><option>Accident / Body Repair</option><option>Inspection</option><option>Other</option></select></label>
+                  {visitPurpose === "Other" && <label>Other Purpose Details<input value={visitPurposeOther} onChange={e=>setVisitPurposeOther(e.target.value)} placeholder="Please specify purpose" required/></label>}
                   <label className="siteAddress">IN Remarks<input value={inRemark} onChange={e=>setInRemark(e.target.value)} placeholder="Additional remarks"/></label>
                 </div>
                 <div className="siteFormActions"><button className="primaryBtn siteSave" disabled={vehicleSaving}>{vehicleSaving?"Saving...":"Register Vehicle IN"} <ArrowUpRight size={17}/></button></div>
