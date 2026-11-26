@@ -66,7 +66,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     if (!supabase || !config) return;
     setLoading(true); setMessage("");
     let q = supabase.from(config.table).select("*").order("created_at",{ascending:false}).limit(500);
-    if (config.table !== "tasks_projects" && config.table !== "general_store_items" && profile.role === "admin" && siteId) q = q.eq("site_id",siteId);
+    if (profile.role === "admin" && siteId) q = q.eq("site_id",siteId);
     const {data,error} = await q;
     if (error) setMessage("Could not load records: " + error.message);
     else setRows(data || []);
