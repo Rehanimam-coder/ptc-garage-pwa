@@ -268,3 +268,15 @@ html[dir="rtl"] .brand .ptcLogo,html[dir="rtl"] .mobileBrand .ptcLogo{margin-rig
 .loginLanguage .languageToggle{min-width:54px}
 html[dir="rtl"] .loginLanguage{justify-content:flex-start}
 @media(max-width:650px){.loginLanguage{margin-bottom:10px}.mobileBrand{margin-bottom:35px}}
+
+
+/* Dashboard directory for every module visible in the signed-in user's sidebar. */
+.dashboardModuleDirectory{display:grid;gap:22px;margin-top:4px}
+.dashboardModuleGroup{min-width:0}
+.dashboardModuleHeading{font-size:11px;font-weight:800;letter-spacing:.09em;color:#087a46;margin:0 0 11px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.dashboardModuleGroup .quickGrid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.dashboardModuleGroup .quickCard{min-height:126px;padding:15px}
+.dashboardModuleGroup .quickCard b{font-size:12px}
+.dashboardModuleGroup .quickCard span{font-size:10px}
+@media(max-width:700px){.dashboardModuleGroup .quickGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.dashboardModuleGroup .quickCard{min-height:118px;padding:12px}}
+@media(max-width:420px){.dashboardModuleGroup .quickGrid{grid-template-columns:1fr}}
