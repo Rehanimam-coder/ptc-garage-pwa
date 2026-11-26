@@ -26,13 +26,8 @@ export default function Home() {
   const [section, setSection] = useState("overview");
   const [language, setLanguage] = useState<"en" | "ar">("en");
   useEffect(() => {
-    const saved = window.localStorage.getItem("ptc-language");
-    if (saved === "ar" || saved === "en") setLanguage(saved);
-  }, []);
-  useEffect(() => {
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
-    window.localStorage.setItem("ptc-language", language);
   }, [language]);
   const tr = (value: string) => {
     if (language !== "ar") return value;
@@ -445,13 +440,14 @@ export default function Home() {
 
   if (checking) return <main className="loading"><div className="spinner"/><span>Loading PTC Garage...</span></main>;
 
-  if (!profile) return <main className="loginShell">
+  if (!profile) return <ArabicTranslator language={language}><main className="loginShell">
     <section className="loginVisual">
       <div className="brand"><img className="ptcLogo" src="/ptc-logo.svg" alt="PTC Since 1969"/><span>PTC <b>GARAGE</b></span></div>
       <div className="visualCopy"><span className="eyebrow">OPERATIONS MANAGEMENT</span><h1>One garage.<br/><em>Complete control.</em></h1><p>Manage vehicle movements, workshop activity and parts operations from one secure workspace.</p></div>
       <div className="visualFooter"><span>PTC GARAGE MANAGEMENT</span><span>SECURE WORKSPACE · 2026</span></div>
     </section>
     <section className="loginPanel"><div className="loginCard">
+      <div className="loginLanguage"><button type="button" className="languageToggle" onClick={()=>setLanguage(language==="en"?"ar":"en")} aria-label="Switch language">{language==="en"?"عربي":"EN"}</button></div>
       <div className="mobileBrand"><img className="ptcLogo" src="/ptc-logo.svg" alt="PTC Since 1969"/><span>PTC <b>GARAGE</b></span></div>
       <span className="eyebrow dark">WELCOME BACK</span><h2>Sign in to your portal</h2><p className="muted">Use the User ID and password provided by your Admin.</p>
       <form onSubmit={login}>
@@ -463,7 +459,7 @@ export default function Home() {
       {!configured && <div className="setupHint">Setup required: add Supabase environment variables before running the site.</div>}
       <div className="loginBottom"><LockKeyhole size={14}/> Your account is protected by Supabase Authentication</div>
     </div></section>
-  </main>;
+  </main></ArabicTranslator>;
 
   const isStore = profile.role === "storekeeper";
   const navGroups = isStore
