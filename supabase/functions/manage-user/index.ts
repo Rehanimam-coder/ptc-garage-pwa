@@ -26,6 +26,23 @@ Deno.serve(
       }
 
       const body = await req.json();
+      if (body.action === "set_active") {
+        const targetId = String(body.userId ?? "").trim();
+        const isActive = body.isActive;
+        if (!targetId || typeof isActive !== "boolean") {
+          return Response.json({ error: "A valid user and active status are required." }, { status: 400, headers: corsHeaders });
+        }
+        const { data: target, error: targetError } = await ctx.supabaseAdmin
+          .from("profiles").select("user_id,role").eq("user_id", targetId).maybeSingle();
+        if (targetError || !target || target.role === "admin" || target.user_id === callerId) {
+          return Response.json({ error: "This account cannot be changed." }, { status: 400, headers: corsHeaders });
+        }
+        const { error: updateError } = await ctx.supabaseAdmin
+          .from("profiles").update({ is_active: isActive }).eq("user_id", targetId);
+        if (updateError) return Response.json({ error: "Could not update account status." }, { status: 500, headers: corsHeaders });
+        return Response.json({ ok: true, isActive }, { status: 200, headers: corsHeaders });
+      }
+
       const userId = String(body.userId ?? "").trim().toLowerCase();
       const fullName = String(body.fullName ?? "").trim();
       const password = String(body.password ?? "");
