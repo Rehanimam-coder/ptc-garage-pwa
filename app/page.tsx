@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes, Plus, Pencil, Power, X, MapPin, ChevronDown, Gauge, AlertTriangle, FileBarChart2 } from "lucide-react";
+import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes, Plus, Pencil, Power, X, MapPin, ChevronDown, Gauge, AlertTriangle, FileBarChart2, Bell, UserRound, Home, Truck, ShoppingCart, BriefcaseBusiness, MessageCircle, BarChart3, ShieldCheck, Settings, Upload, Activity, BrainCircuit, HelpCircle, Database, ClipboardCheck, CalendarClock, ContactRound, PackageSearch } from "lucide-react";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null; is_active: boolean };
 type Counts = { inGarage: number; openOrders: number; receivedToday: number; users: number };
@@ -370,15 +370,23 @@ export default function Home() {
 
   const isStore = profile.role === "storekeeper";
   const navGroups = isStore
-    ? [{label:"WORKSPACE",items:[{id:"overview",label:"Overview",icon:LayoutDashboard}]},{label:"PARTS MANAGEMENT",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes}]}]
+    ? [
+      {label:"OVERVIEW",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard},{id:"my-actions",label:"My actions",icon:ClipboardCheck},{id:"home",label:"Home",icon:Home},{id:"notifications",label:"Notifications",icon:Bell},{id:"my-profile",label:"My profile",icon:UserRound}]},
+      {label:"PARTS AND SERVICES",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes},{id:"general-stores",label:"General Stores",icon:PackageSearch},{id:"parts-purchasing",label:"Parts and purchasing",icon:ShoppingCart}]},
+      {label:"COLLABORATION",items:[{id:"tasks-projects",label:"Tasks and projects",icon:BriefcaseBusiness},{id:"private-chat",label:"Private chat",icon:MessageCircle}]},
+      {label:"INSIGHTS",items:[{id:"centralized-reports",label:"Centralized reports",icon:BarChart3},{id:"help-guide",label:"Help and user guide",icon:HelpCircle}]}
+    ]
     : [
-      {label:"WORKSPACE",items:[{id:"overview",label:"Overview",icon:LayoutDashboard}]},
-      {label:"VEHICLE MANAGEMENT",items:[{id:"vehicle-in",label:"Vehicle IN",icon:CarFront},{id:"vehicle-out",label:"Vehicle OUT",icon:LogOut}]},
-      {label:"PARTS MANAGEMENT",items:[{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes}]},
-      {label:"BREAKDOWN MANAGEMENT",items:[{id:"breakdown-dashboard",label:"Dashboard",icon:Gauge},{id:"breakdowns",label:"Breakdowns",icon:AlertTriangle}]},
-      {label:"MAINTENANCE",items:[{id:"maintenance",label:"Maintenance",icon:Wrench}]},
-      {label:"REPORTS",items:[{id:"reports",label:"Report Creation",icon:FileBarChart2}]},
-      ...(profile.role==="admin" ? [{label:"ADMINISTRATION",items:[{id:"users",label:"User Management",icon:Users},{id:"sites",label:"Site Management",icon:Building2}]}] : [])
+      {label:"OVERVIEW",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard},{id:"my-actions",label:"My actions",icon:ClipboardCheck},{id:"home",label:"Home",icon:Home},{id:"notifications",label:"Notifications",icon:Bell},{id:"my-profile",label:"My profile",icon:UserRound}]},
+      {label:"VEHICLE MANAGEMENT",items:[{id:"vehicle-in",label:"Vehicle IN",icon:CarFront},{id:"vehicle-out",label:"Vehicle OUT",icon:LogOut},{id:"vehicle-in-history",label:"IN History",icon:ClipboardList},{id:"vehicle-out-history",label:"OUT History",icon:Truck},{id:"ptc-assets",label:"PTC assets",icon:Truck}]},
+      {label:"MAINTENANCE",items:[{id:"breakdown-dashboard",label:"Breakdown dashboard",icon:Gauge},{id:"breakdowns",label:"Breakdowns and jobs",icon:AlertTriangle},{id:"maintenance",label:"Preventive maintenance",icon:Wrench}]},
+      {label:"PARTS AND SERVICES",items:[{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes},{id:"orders",label:"Parts Order History",icon:ClipboardList},{id:"receipts",label:"Parts Received History",icon:PackageSearch},{id:"general-stores",label:"General Stores",icon:PackageSearch},{id:"parts-purchasing",label:"Parts and purchasing",icon:ShoppingCart}]},
+      {label:"COLLABORATION",items:[{id:"tasks-projects",label:"Tasks and projects",icon:BriefcaseBusiness},{id:"private-chat",label:"Private chat",icon:MessageCircle}]},
+      {label:"INSIGHTS",items:[{id:"reports",label:"Report Creation",icon:FileBarChart2},{id:"centralized-reports",label:"Centralized reports",icon:BarChart3}]},
+      ...(profile.role==="admin" ? [
+        {label:"ADMINISTRATION",items:[{id:"employee-directory",label:"Employee directory",icon:ContactRound},{id:"users",label:"Users",icon:Users},{id:"roles-permissions",label:"Roles and permissions",icon:ShieldCheck},{id:"master-data",label:"Master data",icon:Database},{id:"sites",label:"Site Management",icon:Building2},{id:"audit-history",label:"Audit history",icon:ClipboardList},{id:"settings",label:"Settings",icon:Settings},{id:"historical-imports",label:"Historical imports",icon:Upload},{id:"system-health",label:"System health",icon:Activity},{id:"ask-ptc-data",label:"Ask PTC data",icon:BrainCircuit}]}
+      ] : []),
+      {label:"SUPPORT",items:[{id:"help-guide",label:"Help and user guide",icon:HelpCircle}]}
     ];
   const pageTitle = navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label || (section==="overview"?"Dashboard":section);
   const breakdownVehicles=vehicles.filter(v=>visitCategory(v.purpose_of_visit)==="breakdown");
@@ -570,7 +578,7 @@ export default function Home() {
           {sitesLoading?<div className="siteEmpty"><div className="spinner"/> Loading sites...</div>:sites.length===0?<div className="siteEmpty">No sites found. Add your first site using the form above.</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Site</th><th>Site code</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody>{sites.map(site=><tr key={site.id}><td><div className="siteNameCell"><span className="siteRowIcon"><MapPin size={16}/></span><b>{site.name}</b></div></td><td><span className="siteCode">{site.code}</span></td><td>{site.address||"—"}</td><td><span className={site.is_active?"statusActive":"statusInactive"}>{site.is_active?"Active":"Inactive"}</span></td><td><div className="siteActions"><button type="button" className="iconAction" title="Edit site" onClick={()=>startEdit(site)}><Pencil size={15}/> Edit</button><button type="button" className={site.is_active?"iconAction deactivate":"iconAction activate"} title={site.is_active?"Deactivate site":"Activate site"} onClick={()=>toggleSite(site)}><Power size={15}/>{site.is_active?"Deactivate":"Activate"}</button></div></td></tr>)}</tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> Deactivating a site does not delete its existing vehicle, parts or history records.</div>
         </section>}
-        {!["overview","sites","users","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{nav.find(n=>n.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
+        {!["overview","sites","users","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
       </div>
     </section>
   </main>;
