@@ -53,3 +53,46 @@
 .siteFields input:hover,.siteFields select:hover,.partLine input:hover,.partLine select:hover,.storeEditForm input:hover,.storeEditForm select:hover{border-color:#a9cdb9}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #22a06b35;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* Grouped, expandable workspace navigation */
+.sidebar .sideNav{display:grid;gap:12px;align-content:start;max-height:calc(100vh - 185px);overflow-y:auto;padding-right:3px}
+.navGroup{min-width:0}
+.navGroupTitle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;border:0;background:transparent;color:#8fa5b8;padding:8px 11px 6px;text-align:left;font-size:9px;font-weight:800;letter-spacing:1.25px;border-radius:7px;transition:color .18s ease,background .18s ease}
+.navGroupTitle:hover{color:#d8e8e1;background:#ffffff0a}
+.groupChevron{opacity:.65;transition:transform .2s ease}
+.groupChevron.expanded{transform:rotate(180deg);opacity:1}
+.navGroupItems{display:grid;gap:3px;padding-top:3px}
+.navGroupItems .navItem{width:100%;padding:10px 12px;font-size:12px}
+.navGroupItems .navItem span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navGroupItems .navItem.active{background:linear-gradient(100deg,#ffffff1b,#ffffff0a);box-shadow:inset 3px 0 #62d6a3,0 5px 16px #07182b35;color:#fff}
+.navGroupItems .navItem:hover{transform:translateX(3px);background:#ffffff13;color:#fff}
+.sidebar .sideNav::-webkit-scrollbar{width:4px}
+.sidebar .sideNav::-webkit-scrollbar-thumb{background:#ffffff24;border-radius:8px}
+
+/* Selected garage vehicle preview on parts requests */
+.selectedVehiclePanel{margin:14px 0 19px;padding:17px 18px;border:1px solid #cfe8da;border-radius:12px;background:linear-gradient(135deg,#f4fbf7,#fff 72%);box-shadow:0 8px 24px #153e2810;animation:panelReveal .24s ease-out}
+.selectedVehicleHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px;color:#183d30;font-size:12px}
+.selectedVehicleGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.selectedVehicleGrid>div{min-width:0;padding:10px 11px;background:#fff;border:1px solid #e5f0e9;border-radius:8px}
+.selectedVehicleGrid small{display:block;color:#82918a;font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px}
+.selectedVehicleGrid strong{display:block;color:#263c34;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.selectedVehicleGrid .selectedVehicleWide{grid-column:span 2}
+@keyframes panelReveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* Reporting and category records */
+.reportFormCard{max-width:980px}
+.reportFormCard .siteFields{grid-template-columns:repeat(4,minmax(0,1fr))}
+.visitTable{min-width:1250px}
+.siteListHeader .secondaryBtn:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:1000px){.selectedVehicleGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.reportFormCard .siteFields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+  .sidebar .sideNav{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;max-height:none;padding-bottom:4px;gap:10px}
+  .navGroup{flex:0 0 auto;min-width:145px}
+  .navGroupTitle{padding:6px 7px;font-size:8px}
+  .navGroupItems{gap:2px}
+  .navGroupItems .navItem{padding:8px 9px;font-size:10px}
+  .selectedVehicleGrid{grid-template-columns:1fr 1fr;gap:7px}
+  .selectedVehicleGrid .selectedVehicleWide{grid-column:1/-1}
+  .reportFormCard .siteFields{grid-template-columns:1fr}
+}
