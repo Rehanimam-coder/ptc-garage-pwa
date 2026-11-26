@@ -76,7 +76,8 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     if (!supabase) return;
     await supabase.from("audit_logs").insert({user_id:profile.user_id,action,module,record_id:id,details});
   }
-  useEffect(()=>{ if(config){setSiteId(profile.site_id||""); void load();} },[section,profile.user_id,siteId]);
+  useEffect(()=>{ if(profile.role!=="admin") setSiteId(profile.site_id||""); },[section,profile.user_id,profile.role,profile.site_id]);
+  useEffect(()=>{ if(config) void load(); },[section,profile.user_id,siteId]);
   useEffect(()=>{ if(section==="private-chat"){void loadChat();void loadChatUsers();} if(section==="notifications") void loadNotifications(); if(section==="settings") void loadSettings(); if(section==="breakdowns"||section==="maintenance") void loadLegacyVisits(); },[section]);
   async function loadLegacyVisits(){if(!supabase)return;const {data,error}=await supabase.from("vehicle_visits").select("*").order("in_at",{ascending:false}).limit(1000);if(error){setMessage("Could not load historical vehicle visits: "+error.message);return;}const key=section==="breakdowns"?"breakdown":"maintenance";setLegacyRows((data||[]).filter((v:any)=>String(v.purpose_of_visit||"").toLowerCase().includes(key)));}
   async function loadChatUsers(){if(!supabase)return;const {data}=await supabase.from("profiles").select("user_id,username,full_name,role,is_active").eq("is_active",true).order("full_name");setChatUsers((data||[]).filter((u:any)=>u.user_id!==profile.user_id));}
