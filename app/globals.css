@@ -22,3 +22,21 @@
 .workTeamRow label { min-width: 0; }
 @media (max-width: 900px) { .workTeamRow { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 560px) { .workTeamRow { grid-template-columns: 1fr; } .workTeamHeading { align-items: flex-start; flex-direction: column; } }
+
+/* Parts order and receiving modules */
+.partsPage{max-width:1320px}
+.partLinesHeading,.partLineTop{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.partLinesHeading{margin:8px 0 12px;color:var(--ink);font-size:12px}
+.partLine{border:1px solid #e6ecef;background:#fbfcfd;border-radius:9px;padding:15px;margin:10px 0}
+.partLineTop{font-size:11px;color:#536273;margin-bottom:12px}
+.partLine .siteFields{grid-template-columns:repeat(3,minmax(0,1fr))}
+.partLine input,.partLine select,.storeEditForm input,.storeEditForm select{height:39px;border:1px solid #dce2e8;border-radius:7px;padding:0 10px;background:#fff;color:var(--ink);font-size:11px;min-width:0;width:100%}
+.partLine label,.storeEditForm label{display:flex;flex-direction:column;gap:6px;font-size:10px;font-weight:700;color:#607183;min-width:0}
+.tableSub{display:block;color:#8a97a3;font-size:9px;margin-top:4px;line-height:1.45;max-width:220px;white-space:normal}
+.statusPartial{display:inline-flex;border-radius:20px;padding:5px 9px;font-size:10px;font-weight:700;background:#fff4df;color:#9b6819}
+.priorityTag{display:inline-flex;padding:5px 8px;border-radius:5px;background:#f1f4f6;color:#607183;font-size:10px;text-transform:capitalize}
+.storeEditForm{display:grid;gap:8px;min-width:180px}
+.storeEditForm .siteSave{width:100%;height:36px;font-size:10px}
+.partsTable{min-width:1050px}
+@media(max-width:900px){.partLine .siteFields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.partLinesHeading,.partLineTop{align-items:flex-start;flex-direction:column}.partLine .siteFields{grid-template-columns:1fr}.storeEditForm{min-width:155px}}
