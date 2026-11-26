@@ -132,7 +132,7 @@ export default function ArabicTranslator({ children, language }: { children: Rea
     });
     observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "aria-label"] });
     return () => observer.disconnect();
-  }, [language, children]);
+  }, [language]);
 
   return <>{children}</>;
 }
