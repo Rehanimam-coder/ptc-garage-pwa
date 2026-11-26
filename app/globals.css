@@ -200,3 +200,71 @@ body{background:#f7f9fc;color:#101828}
 .helpGrid p{margin:0;color:#667085;font-size:12px;line-height:1.65}
 @media(max-width:900px){.moduleFields{grid-template-columns:repeat(2,minmax(0,1fr))}.profileSummary,.moduleStats{grid-template-columns:repeat(2,minmax(0,1fr))}.moduleQuickLinks{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.moduleFields,.profileSummary,.moduleStats,.helpGrid{grid-template-columns:1fr}.moduleHeaderActions{width:100%}.moduleHeaderActions>*{flex:1}.moduleToolbar{align-items:stretch;flex-direction:column}.chatComposer{align-items:stretch;flex-direction:column}.chatComposer button{width:100%}}
+
+
+/* PTC professional brand refresh */
+.ptcLogo{display:block;width:160px;max-width:100%;height:auto;object-fit:contain}
+.sideBrand{display:flex;align-items:center;justify-content:center;padding:8px 8px 22px;margin-bottom:10px;border-bottom:1px solid #e4eaf0}
+.sideBrand .ptcLogo{width:158px}
+.brand .ptcLogo{width:154px;margin-right:12px}
+.mobileBrand .ptcLogo{width:126px;margin-right:10px}
+.languageToggle{min-width:48px;height:42px;padding:0 12px;border:1px solid #d8e1e9;border-radius:10px;background:#fff;color:#0b5f3b;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 2px 5px #172b3d0b}
+.languageToggle:hover{background:#edf8f2;border-color:#0b7547}
+.appShell{grid-template-columns:270px minmax(0,1fr);background:#f6f8fb}
+.sidebar{background:#fff;color:#203047;border-right:1px solid #e1e8ef;box-shadow:3px 0 14px #1a2c3d08;padding:18px 15px}
+.sideLabel{color:#64748b;font-size:11px;letter-spacing:1.1px;padding:7px 12px 12px}
+.navGroupTitle{color:#66778c;font-size:11px;letter-spacing:1px;font-weight:800}
+.navItem{color:#26364c;border:1px solid transparent;border-radius:10px;padding:12px 11px;font-size:13px;transition:background .18s,border-color .18s}
+.navItem:hover{background:#f3f7fa;color:#10243e}
+.navItem.active{background:#eaf5fb;color:#075b8c;border-color:#79bce0;box-shadow:0 2px 5px #0a5c8d12}
+.navItem svg{flex:0 0 auto;width:19px;height:19px;padding:2px;box-sizing:content-box;border-radius:7px;background:#e9f5ef;color:#087a46}
+.navGroupItems .navItem:nth-child(6n+1) svg{background:#dcf7eb;color:#07834b}
+.navGroupItems .navItem:nth-child(6n+2) svg{background:#e2f0ff;color:#1670c5}
+.navGroupItems .navItem:nth-child(6n+3) svg{background:#fff0df;color:#d45b18}
+.navGroupItems .navItem:nth-child(6n+4) svg{background:#ffe8eb;color:#d52d45}
+.navGroupItems .navItem:nth-child(6n+5) svg{background:#ecebff;color:#5548c8}
+.navGroupItems .navItem:nth-child(6n) svg{background:#fff5cc;color:#a36a00}
+.navItem.active svg{background:#087a46;color:#fff}
+.userChip{border-top:1px solid #e4eaf0}
+.userChip b{color:#26364c}
+.userChip small{color:#718096}
+.avatar,.topAvatar{background:#e4f4eb;color:#08613b}
+.logoutBtn{color:#53657a}
+.mainArea{background:#f7f9fc}
+.topbar{height:78px;padding:0 3%;box-shadow:0 2px 7px #1b2d3e08}
+.topbar .eyebrow{color:#075b37!important;font-weight:800;letter-spacing:1.1px}
+.content{padding:28px 3%;max-width:1600px}
+html[dir="rtl"] body{direction:rtl}
+html[dir="rtl"] .appShell{grid-template-columns:minmax(0,1fr) 270px}
+html[dir="rtl"] .sidebar{grid-column:2;grid-row:1;border-right:0;border-left:1px solid #e1e8ef}
+html[dir="rtl"] .mainArea{grid-column:1;grid-row:1}
+html[dir="rtl"] .navItem{text-align:right}
+html[dir="rtl"] .navItem.active{box-shadow:inset -3px 0 #087a46}
+html[dir="rtl"] .topbar,html[dir="rtl"] .topRight{direction:rtl}
+html[dir="rtl"] .brand .ptcLogo,html[dir="rtl"] .mobileBrand .ptcLogo{margin-right:0;margin-left:12px}
+@media(max-width:760px){.appShell{grid-template-columns:1fr}.sidebar{min-height:auto;padding:10px 12px}.sideBrand{justify-content:flex-start;padding:4px 6px 12px}.sideBrand .ptcLogo{width:116px}.sidebar nav{max-height:42vh;overflow:auto}.content{padding:18px 14px}.topbar{padding:0 14px}.topRight{gap:6px}.topRight>span:not(.liveDot){display:none}html[dir="rtl"] .appShell{grid-template-columns:1fr}html[dir="rtl"] .sidebar,html[dir="rtl"] .mainArea{grid-column:1;grid-row:auto}}
+
+
+/* Arabic RTL refinements and consistent professional icon palette */
+html[lang="ar"] body,html[lang="ar"] button,html[lang="ar"] input,html[lang="ar"] select,html[lang="ar"] textarea{font-family:'Noto Sans Arabic','DM Sans',sans-serif}
+html[dir="rtl"] .sidebar{border-left:1px solid #e1e8ef;border-right:0}
+html[dir="rtl"] .sideBrand{direction:rtl}
+html[dir="rtl"] .navItem{direction:rtl;justify-content:flex-start;text-align:right}
+html[dir="rtl"] .navItem svg{margin-left:2px;margin-right:0}
+html[dir="rtl"] .navGroupTitle{direction:rtl;text-align:right}
+html[dir="rtl"] .navGroupTitle .groupChevron{margin-right:auto;margin-left:0}
+html[dir="rtl"] .sideBottom,html[dir="rtl"] .userChip,html[dir="rtl"] .logoutBtn{direction:rtl;text-align:right}
+html[dir="rtl"] .topbar{direction:rtl}
+html[dir="rtl"] .topRight{direction:rtl}
+html[dir="rtl"] .welcome,html[dir="rtl"] .siteIntro,html[dir="rtl"] .sectionHeading{direction:rtl;text-align:right}
+html[dir="rtl"] .siteForm label,html[dir="rtl"] .modulePage label{text-align:right}
+html[dir="rtl"] .siteForm input,html[dir="rtl"] .siteForm select,html[dir="rtl"] .siteForm textarea,html[dir="rtl"] .modulePage input,html[dir="rtl"] .modulePage select,html[dir="rtl"] .modulePage textarea{text-align:right}
+html[dir="rtl"] .siteTable th,html[dir="rtl"] .siteTable td,html[dir="rtl"] .modulePage table th,html[dir="rtl"] .modulePage table td{text-align:right}
+html[dir="rtl"] .brand .ptcLogo,html[dir="rtl"] .mobileBrand .ptcLogo{margin-right:0;margin-left:12px}
+@media(max-width:760px){html[dir="rtl"] .sideBrand{justify-content:flex-end}html[dir="rtl"] .userChip{justify-content:flex-start}}
+
+/* Login language selector */
+.loginLanguage{display:flex;justify-content:flex-end;margin:0 0 16px}
+.loginLanguage .languageToggle{min-width:54px}
+html[dir="rtl"] .loginLanguage{justify-content:flex-start}
+@media(max-width:650px){.loginLanguage{margin-bottom:10px}.mobileBrand{margin-bottom:35px}}

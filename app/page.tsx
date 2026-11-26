@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import ModuleWorkspace from "@/components/ModuleWorkspace";
+import ArabicTranslator from "@/components/ArabicTranslator";
 import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes, Plus, Pencil, Power, X, MapPin, ChevronDown, Gauge, AlertTriangle, FileBarChart2, Bell, UserRound, Home as HomeIcon, Truck, ShoppingCart, BriefcaseBusiness, MessageCircle, BarChart3, ShieldCheck, Settings, Upload, Activity, BrainCircuit, HelpCircle, Database, ClipboardCheck, CalendarClock, ContactRound, PackageSearch } from "lucide-react";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null; is_active: boolean };
@@ -23,6 +24,19 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [checking, setChecking] = useState(true);
   const [section, setSection] = useState("overview");
+  const [language, setLanguage] = useState<"en" | "ar">("en");
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+  }, [language]);
+  const tr = (value: string) => {
+    if (language !== "ar") return value;
+    const words: Record<string,string> = {
+      "OVERVIEW":"نظرة عامة","WORKSPACE":"مساحة العمل","VEHICLE MANAGEMENT":"إدارة المركبات","MAINTENANCE":"الصيانة","PARTS AND SERVICES":"قطع الغيار والخدمات","COLLABORATION":"التعاون","INSIGHTS":"التقارير والتحليلات","ADMINISTRATION":"الإدارة","SUPPORT":"الدعم",
+      "Dashboard":"لوحة التحكم","My actions":"إجراءاتي","Home":"الرئيسية","Notifications":"الإشعارات","My profile":"ملفي الشخصي","Vehicle IN":"دخول المركبة","Vehicle OUT":"خروج المركبة","IN History":"سجل الدخول","OUT History":"سجل الخروج","PTC assets":"أصول PTC","Breakdown dashboard":"لوحة الأعطال","Breakdowns and jobs":"الأعطال والأعمال","Preventive maintenance":"الصيانة الوقائية","Parts Order":"طلب قطع الغيار","Parts Received":"قطع الغيار المستلمة","Parts Order History":"سجل طلبات القطع","Parts Received History":"سجل استلام القطع","General Stores":"المخازن العامة","Parts and purchasing":"قطع الغيار والمشتريات","Tasks and projects":"المهام والمشاريع","Private chat":"المحادثة الخاصة","Report Creation":"إنشاء التقارير","Centralized reports":"التقارير المركزية","Employee directory":"دليل الموظفين","Users":"المستخدمون","Roles and permissions":"الأدوار والصلاحيات","Master data":"البيانات الرئيسية","Site Management":"إدارة المواقع","Audit history":"سجل التدقيق","Settings":"الإعدادات","Historical imports":"استيراد السجلات السابقة","System health":"حالة النظام","Ask PTC data":"اسأل بيانات PTC","Help and user guide":"المساعدة ودليل المستخدم","Sign out":"تسجيل الخروج","System online":"النظام متصل"
+    };
+    return words[value] || value;
+  };
   const [sites, setSites] = useState<Site[]>([]);
   const [sitesLoading, setSitesLoading] = useState(false);
   const [siteSaving, setSiteSaving] = useState(false);
@@ -426,14 +440,15 @@ export default function Home() {
 
   if (checking) return <main className="loading"><div className="spinner"/><span>Loading PTC Garage...</span></main>;
 
-  if (!profile) return <main className="loginShell">
+  if (!profile) return <ArabicTranslator language={language}><main className="loginShell">
     <section className="loginVisual">
-      <div className="brand"><div className="brandMark"><Wrench size={23}/></div><span>PTC <b>GARAGE</b></span></div>
+      <div className="brand"><img className="ptcLogo" src="/ptc-logo.svg" alt="PTC Since 1969"/><span>PTC <b>GARAGE</b></span></div>
       <div className="visualCopy"><span className="eyebrow">OPERATIONS MANAGEMENT</span><h1>One garage.<br/><em>Complete control.</em></h1><p>Manage vehicle movements, workshop activity and parts operations from one secure workspace.</p></div>
       <div className="visualFooter"><span>PTC GARAGE MANAGEMENT</span><span>SECURE WORKSPACE · 2026</span></div>
     </section>
     <section className="loginPanel"><div className="loginCard">
-      <div className="mobileBrand"><div className="brandMark"><Wrench size={21}/></div><span>PTC <b>GARAGE</b></span></div>
+      <div className="loginLanguage"><button type="button" className="languageToggle" onClick={()=>setLanguage(language==="en"?"ar":"en")} aria-label="Switch language">{language==="en"?"عربي":"EN"}</button></div>
+      <div className="mobileBrand"><img className="ptcLogo" src="/ptc-logo.svg" alt="PTC Since 1969"/><span>PTC <b>GARAGE</b></span></div>
       <span className="eyebrow dark">WELCOME BACK</span><h2>Sign in to your portal</h2><p className="muted">Use the User ID and password provided by your Admin.</p>
       <form onSubmit={login}>
         <label htmlFor="userid">USER ID</label><input id="userid" value={username} onChange={e=>setUsername(e.target.value)} placeholder="e.g. ADMIN001" autoCapitalize="none" autoComplete="username" required/>
@@ -444,7 +459,7 @@ export default function Home() {
       {!configured && <div className="setupHint">Setup required: add Supabase environment variables before running the site.</div>}
       <div className="loginBottom"><LockKeyhole size={14}/> Your account is protected by Supabase Authentication</div>
     </div></section>
-  </main>;
+  </main></ArabicTranslator>;
 
   const isStore = profile.role === "storekeeper";
   const navGroups = isStore
@@ -466,7 +481,7 @@ export default function Home() {
       ] : []),
       {label:"SUPPORT",items:[{id:"help-guide",label:"Help and user guide",icon:HelpCircle}]}
     ];
-  const pageTitle = navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label || (section==="overview"?"Dashboard":section);
+  const pageTitle = tr(navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label || (section==="overview"?"Dashboard":section));
   const filteredEmployees = employees.filter(employee => {
     const q = employeeSearch.trim().toLowerCase();
     const matchesSearch = !q || [employee.employee_code, employee.full_name, employee.department, employee.designation, employee.reporting_manager].some(value => (value || "").toLowerCase().includes(q));
@@ -476,22 +491,22 @@ export default function Home() {
   });
   const breakdownVehicles=vehicles.filter(v=>visitCategory(v.purpose_of_visit)==="breakdown");
 
-  return <main className="appShell">
-    <aside className="sidebar"><div className="brand sideBrand"><div className="brandMark"><Wrench size={21}/></div><span>PTC <b>GARAGE</b></span></div>
-      <div className="sideLabel">WORKSPACE</div>
+  return <ArabicTranslator language={language}><main className="appShell">
+    <aside className="sidebar"><div className="brand sideBrand"><img className="ptcLogo" src="/ptc-logo.svg" alt="PTC Since 1969"/></div>
+      <div className="sideLabel">{tr("WORKSPACE")}</div>
       <nav className="sideNav">
         {navGroups.map(group=><div className="navGroup" key={group.label}>
           <button type="button" className="navGroupTitle" onClick={()=>setOpenNavGroups(prev=>({...prev,[group.label]:!prev[group.label]}))}>
-            <span>{group.label}</span><ChevronDown size={14} className={openNavGroups[group.label]?"groupChevron expanded":"groupChevron"}/>
+            <span>{tr(group.label)}</span><ChevronDown size={14} className={openNavGroups[group.label]?"groupChevron expanded":"groupChevron"}/>
           </button>
           {openNavGroups[group.label]&&<div className="navGroupItems">
-            {group.items.map(item=><button key={item.id} className={section===item.id?"navItem active":"navItem"} onClick={()=>setSection(item.id)}><item.icon size={17}/><span>{item.label}</span></button>)}
+            {group.items.map(item=><button key={item.id} className={section===item.id?"navItem active":"navItem"} onClick={()=>setSection(item.id)}><item.icon size={17}/><span>{tr(item.label)}</span></button>)}
           </div>}
         </div>)}
       </nav>
-      <div className="sideBottom"><div className="userChip"><div className="avatar">{(profile.full_name||profile.username||"U").slice(0,1).toUpperCase()}</div><div><b>{profile.full_name}</b><small>{profile.role==="storekeeper"?"Store Keeper":profile.role==="admin"?"Administrator":"Supervisor"}</small></div></div><button className="logoutBtn" onClick={logout}><LogOut size={17}/> Sign out</button></div>
+      <div className="sideBottom"><div className="userChip"><div className="avatar">{(profile.full_name||profile.username||"U").slice(0,1).toUpperCase()}</div><div><b>{profile.full_name}</b><small>{profile.role==="storekeeper"?"Store Keeper":profile.role==="admin"?"Administrator":"Supervisor"}</small></div></div><button className="logoutBtn" onClick={logout}><LogOut size={17}/> {tr("Sign out")}</button></div>
     </aside>
-    <section className="mainArea"><header className="topbar"><div><span className="eyebrow dark">PTC GARAGE / {section.toUpperCase()}</span><h2>{pageTitle}</h2></div><div className="topRight"><span className="liveDot"/> <span>System online</span><div className="topAvatar">{greeting.slice(0,1).toUpperCase()}</div></div></header>
+    <section className="mainArea"><header className="topbar"><div><span className="eyebrow dark">PTC MAINTENANCE</span><h2>{pageTitle}</h2></div><div className="topRight"><button type="button" className="languageToggle" onClick={()=>setLanguage(language==="en"?"ar":"en")} aria-label="Switch language">{language==="en"?"عربي":"EN"}</button><span className="liveDot"/> <span>{tr("System online")}</span><div className="topAvatar">{greeting.slice(0,1).toUpperCase()}</div></div></header>
       <div className="content">\n
         {(section==="parts-order"||section==="orders")&&<section className="sitePage partsPage">
           <div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>{section==="parts-order"?"Parts Order":"Parts Order History"}</h1><p>{section==="parts-order"?"Create a new parts request with multiple part lines.":"Review and update parts request records."}</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
@@ -696,7 +711,7 @@ export default function Home() {
 
       </div>
     </section>
-  </main>;
+  </main></ArabicTranslator>;
 }
 
 function formatDuration(start: string, end: string | null) {
