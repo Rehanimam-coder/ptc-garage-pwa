@@ -507,7 +507,7 @@ export default function Home() {
       <div className="sideBottom"><div className="userChip"><div className="avatar">{(profile.full_name||profile.username||"U").slice(0,1).toUpperCase()}</div><div><b>{profile.full_name}</b><small>{profile.role==="storekeeper"?"Store Keeper":profile.role==="admin"?"Administrator":"Supervisor"}</small></div></div><button className="logoutBtn" onClick={logout}><LogOut size={17}/> {tr("Sign out")}</button></div>
     </aside>
     <section className="mainArea"><header className="topbar"><div><span className="eyebrow dark">PTC MAINTENANCE</span><h2>{pageTitle}</h2></div><div className="topRight"><button type="button" className="languageToggle" onClick={()=>setLanguage(language==="en"?"ar":"en")} aria-label="Switch language">{language==="en"?"عربي":"EN"}</button><span className="liveDot"/> <span>{tr("System online")}</span><div className="topAvatar">{greeting.slice(0,1).toUpperCase()}</div></div></header>
-      <div className="content">\n
+      <div className="content">
         {(section==="parts-order"||section==="orders")&&<section className="sitePage partsPage">
           <div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>{section==="parts-order"?"Parts Order":"Parts Order History"}</h1><p>{section==="parts-order"?"Create a new parts request with multiple part lines.":"Review and update parts request records."}</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
           {partsMessage&&<div className={partsMessage.includes("successfully")?"siteSuccess":"siteError"}>{partsMessage}</div>}
