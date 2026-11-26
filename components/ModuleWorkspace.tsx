@@ -66,7 +66,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     if (!supabase || !config) return;
     setLoading(true); setMessage("");
     let q = supabase.from(config.table).select("*").order("created_at",{ascending:false}).limit(500);
-    if (profile.role === "admin" && siteId) q = q.eq("site_id",siteId);
+    if ((profile.role === "admin" || profile.role === "storekeeper") && siteId && config.table !== "tasks_projects") q = q.eq("site_id",siteId);
     const {data,error} = await q;
     if (error) setMessage("Could not load records: " + error.message);
     else setRows(data || []);
@@ -101,7 +101,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
   function startEdit(row:any){if(!config)return;setEditing(row);setForm(Object.fromEntries(config.fields.map(f=>[f.key,row[f.key]==null?"":String(row[f.key]).slice(0,10)])));setFormOpen(true);setMessage("");}
   async function save(e:React.FormEvent){
     e.preventDefault(); if(!supabase||!config)return;
-    const actualSite = isAdmin ? siteId : profile.site_id;
+    const actualSite = (isAdmin || (profile.role === "storekeeper" && config.table === "general_store_items")) ? siteId : profile.site_id;
     if(config.table!=="tasks_projects" && !actualSite){setMessage("Please select or request an assigned site.");return;}
     const payload:any={};
     config.fields.forEach(f=>{const v=form[f.key]?.trim()||null;payload[f.key]=f.type==="number"?(v===null?null:Number(v)):v;});
@@ -126,11 +126,11 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     if(config.adminOnly && !isAdmin)return <Denied/>;
     if(profile.role==="storekeeper" && !config.storeAllowed)return <Denied/>;
     return <section className="sitePage modulePage">
-      <div className="siteIntro"><div><span className="eyebrow dark">PTC GARAGE WORKSPACE</span><h1>{config.title}</h1><p>{config.description}</p></div><div className="moduleHeaderActions">{isAdmin&&<select aria-label="Filter by site" value={siteId} onChange={e=>setSiteId(e.target.value)}><option value="">All sites</option>{sites.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<button className="refreshBtn" onClick={load}>Refresh</button><button className="primaryBtn siteSave" onClick={startAdd}>+ Add new</button></div></div>
+      <div className="siteIntro"><div><span className="eyebrow dark">PTC GARAGE WORKSPACE</span><h1>{config.title}</h1><p>{config.description}</p></div><div className="moduleHeaderActions">{(isAdmin||(profile.role==="storekeeper"&&config.table==="general_store_items"))&&<select aria-label="Filter by site" value={siteId} onChange={e=>setSiteId(e.target.value)}><option value="">All sites</option>{sites.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}<button className="refreshBtn" onClick={load}>Refresh</button><button className="primaryBtn siteSave" onClick={startAdd}>+ Add new</button></div></div>
       {message&&<div className={message.includes("successfully")?"siteSuccess":"siteError"}>{message}</div>}
       {formOpen&&<div className="siteFormCard"><div className="siteFormTitle"><div className="siteIcon">＋</div><div><h3>{editing?"Update record":"Add new record"}</h3><p>Fields marked required must be completed.</p></div></div>
         <form className="siteForm" onSubmit={save}>
-          {isAdmin&&<div className="siteFields"><label>Site<select required value={siteId} onChange={e=>setSiteId(e.target.value)}><option value="">Select site</option>{sites.filter(s=>s.is_active).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label></div>}
+          {(isAdmin||(profile.role==="storekeeper"&&config.table==="general_store_items"))&&<div className="siteFields"><label>Site<select required value={siteId} onChange={e=>setSiteId(e.target.value)}><option value="">Select site</option>{sites.filter(s=>s.is_active).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label></div>}
           <div className="siteFields moduleFields">{config.fields.map(f=><label key={f.key}>{f.label}{f.type==="textarea"?<textarea value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>:f.type==="select"?<select value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>{f.options?.map(o=><option key={o}>{o}</option>)}</select>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} min={f.type==="number"?(f.key==="repeat_interval"?"0.01":"0"):undefined} value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>}</label>)}</div>
           <div className="siteFormActions"><button type="button" className="secondaryBtn" onClick={()=>setFormOpen(false)}>Cancel</button><button className="primaryBtn siteSave" disabled={saving}>{saving?"Saving...":editing?"Save changes":"Save record"}</button></div>
         </form>
