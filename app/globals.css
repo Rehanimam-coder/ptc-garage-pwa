@@ -243,3 +243,23 @@ html[dir="rtl"] .navItem.active{box-shadow:inset -3px 0 #087a46}
 html[dir="rtl"] .topbar,html[dir="rtl"] .topRight{direction:rtl}
 html[dir="rtl"] .brand .ptcLogo,html[dir="rtl"] .mobileBrand .ptcLogo{margin-right:0;margin-left:12px}
 @media(max-width:760px){.appShell{grid-template-columns:1fr}.sidebar{min-height:auto;padding:10px 12px}.sideBrand{justify-content:flex-start;padding:4px 6px 12px}.sideBrand .ptcLogo{width:116px}.sidebar nav{max-height:42vh;overflow:auto}.content{padding:18px 14px}.topbar{padding:0 14px}.topRight{gap:6px}.topRight>span:not(.liveDot){display:none}html[dir="rtl"] .appShell{grid-template-columns:1fr}html[dir="rtl"] .sidebar,html[dir="rtl"] .mainArea{grid-column:1;grid-row:auto}}
+
+
+/* Arabic RTL refinements and consistent professional icon palette */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap');
+html[lang="ar"] body,html[lang="ar"] button,html[lang="ar"] input,html[lang="ar"] select,html[lang="ar"] textarea{font-family:'Noto Sans Arabic','DM Sans',sans-serif}
+html[dir="rtl"] .sidebar{border-left:1px solid #e1e8ef;border-right:0}
+html[dir="rtl"] .sideBrand{direction:rtl}
+html[dir="rtl"] .navItem{direction:rtl;justify-content:flex-start;text-align:right}
+html[dir="rtl"] .navItem svg{margin-left:2px;margin-right:0}
+html[dir="rtl"] .navGroupTitle{direction:rtl;text-align:right}
+html[dir="rtl"] .navGroupTitle .groupChevron{margin-right:auto;margin-left:0}
+html[dir="rtl"] .sideBottom,html[dir="rtl"] .userChip,html[dir="rtl"] .logoutBtn{direction:rtl;text-align:right}
+html[dir="rtl"] .topbar{direction:rtl}
+html[dir="rtl"] .topRight{direction:rtl}
+html[dir="rtl"] .welcome,html[dir="rtl"] .siteIntro,html[dir="rtl"] .sectionHeading{direction:rtl;text-align:right}
+html[dir="rtl"] .siteForm label,html[dir="rtl"] .modulePage label{text-align:right}
+html[dir="rtl"] .siteForm input,html[dir="rtl"] .siteForm select,html[dir="rtl"] .siteForm textarea,html[dir="rtl"] .modulePage input,html[dir="rtl"] .modulePage select,html[dir="rtl"] .modulePage textarea{text-align:right}
+html[dir="rtl"] .siteTable th,html[dir="rtl"] .siteTable td,html[dir="rtl"] .modulePage table th,html[dir="rtl"] .modulePage table td{text-align:right}
+html[dir="rtl"] .brand .ptcLogo,html[dir="rtl"] .mobileBrand .ptcLogo{margin-right:0;margin-left:12px}
+@media(max-width:760px){html[dir="rtl"] .sideBrand{justify-content:flex-end}html[dir="rtl"] .userChip{justify-content:flex-start}}
