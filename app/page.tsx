@@ -8,6 +8,9 @@ type Profile = { user_id: string; username: string | null; full_name: string; ro
 type Counts = { inGarage: number; openOrders: number; receivedToday: number; users: number };
 type Site = { id: string; name: string; code: string; address: string | null; is_active: boolean; created_at?: string };
 type WorkDetail = { name: string; designation: string; work_done: string };
+type EmployeeRecord = { id: string; employee_code: string; full_name: string; department: string | null; designation: string | null; site_id: string | null; reporting_manager: string | null; phone: string | null; email: string | null; date_joined: string | null; employment_status: "Active" | "Inactive" | "On Leave"; linked_user_id: string | null; notes: string | null; created_at: string; updated_at: string };
+type EmployeeForm = { employee_code: string; full_name: string; department: string; designation: string; site_id: string; reporting_manager: string; phone: string; email: string; date_joined: string; employment_status: "Active" | "Inactive" | "On Leave"; linked_user_id: string; notes: string };
+const emptyEmployeeForm = (): EmployeeForm => ({ employee_code: "", full_name: "", department: "", designation: "", site_id: "", reporting_manager: "", phone: "", email: "", date_joined: "", employment_status: "Active", linked_user_id: "", notes: "" });
 type Vehicle = { id: string; site_id: string; ptc_id: string | null; vehicle_type: string; complaint: string; work_description: string | null; purpose_of_visit: string | null; status: "IN" | "OUT"; in_at: string; out_at: string | null; in_remark: string | null; out_remark: string | null; work_details?: WorkDetail[] };
 
 export default function Home() {
@@ -57,6 +60,16 @@ export default function Home() {
   const [receiptRemarks,setReceiptRemarks]=useState("");
   const [receiptSaving,setReceiptSaving]=useState(false);
   const [teamUsers,setTeamUsers]=useState<Profile[]>([]);
+  const [employees,setEmployees]=useState<EmployeeRecord[]>([]);
+  const [employeesLoading,setEmployeesLoading]=useState(false);
+  const [employeeSaving,setEmployeeSaving]=useState(false);
+  const [employeeMessage,setEmployeeMessage]=useState("");
+  const [editingEmployee,setEditingEmployee]=useState<EmployeeRecord|null>(null);
+  const [employeeFormOpen,setEmployeeFormOpen]=useState(false);
+  const [employeeForm,setEmployeeForm]=useState<EmployeeForm>(emptyEmployeeForm);
+  const [employeeSearch,setEmployeeSearch]=useState("");
+  const [employeeStatusFilter,setEmployeeStatusFilter]=useState("all");
+  const [employeeSiteFilter,setEmployeeSiteFilter]=useState("all");
   const [usersLoading,setUsersLoading]=useState(false);
   const [userSaving,setUserSaving]=useState(false);
   const [userMessage,setUserMessage]=useState("");
@@ -120,6 +133,63 @@ export default function Home() {
     setUsersLoading(false);
   }
 
+  async function loadEmployeeDirectory() {
+    if (!supabase) return;
+    setEmployeesLoading(true); setEmployeeMessage("");
+    const { data, error } = await supabase.from("employee_directory").select("*").order("full_name", { ascending: true });
+    if (error) setEmployeeMessage("Could not load employee directory: " + error.message);
+    else setEmployees((data || []) as EmployeeRecord[]);
+    setEmployeesLoading(false);
+  }
+
+  function startNewEmployee() {
+    setEditingEmployee(null); setEmployeeForm(emptyEmployeeForm()); setEmployeeMessage(""); setEmployeeFormOpen(true);
+  }
+
+  function startEditEmployee(employee: EmployeeRecord) {
+    setEditingEmployee(employee);
+    setEmployeeForm({ employee_code: employee.employee_code, full_name: employee.full_name, department: employee.department || "", designation: employee.designation || "", site_id: employee.site_id || "", reporting_manager: employee.reporting_manager || "", phone: employee.phone || "", email: employee.email || "", date_joined: employee.date_joined || "", employment_status: employee.employment_status, linked_user_id: employee.linked_user_id || "", notes: employee.notes || "" });
+    setEmployeeMessage(""); setEmployeeFormOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveEmployee(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase) return;
+    const code = employeeForm.employee_code.trim();
+    const name = employeeForm.full_name.trim();
+    if (!code || !name) { setEmployeeMessage("Employee ID and full name are required."); return; }
+    setEmployeeSaving(true); setEmployeeMessage("");
+    const payload = { employee_code: code, full_name: name, department: employeeForm.department.trim() || null, designation: employeeForm.designation.trim() || null, site_id: employeeForm.site_id || null, reporting_manager: employeeForm.reporting_manager.trim() || null, phone: employeeForm.phone.trim() || null, email: employeeForm.email.trim() || null, date_joined: employeeForm.date_joined || null, employment_status: employeeForm.employment_status, linked_user_id: employeeForm.linked_user_id || null, notes: employeeForm.notes.trim() || null };
+    const result = editingEmployee
+      ? await supabase.from("employee_directory").update(payload).eq("id", editingEmployee.id)
+      : await supabase.from("employee_directory").insert(payload);
+    if (result.error) setEmployeeMessage("Could not save employee: " + result.error.message);
+    else {
+      setEmployeeMessage(editingEmployee ? "Employee details updated successfully." : "Employee added successfully.");
+      setEditingEmployee(null); setEmployeeForm(emptyEmployeeForm()); setEmployeeFormOpen(false);
+      await loadEmployeeDirectory();
+    }
+    setEmployeeSaving(false);
+  }
+
+  async function toggleEmployeeStatus(employee: EmployeeRecord) {
+    if (!supabase) return;
+    const next = employee.employment_status === "Active" ? "Inactive" : "Active";
+    if (!window.confirm("Change " + employee.full_name + " status to " + next + "?")) return;
+    const { error } = await supabase.from("employee_directory").update({ employment_status: next }).eq("id", employee.id);
+    if (error) setEmployeeMessage("Could not update employee status: " + error.message);
+    else { setEmployeeMessage(employee.full_name + " is now " + next + "."); await loadEmployeeDirectory(); }
+  }
+
+  function exportEmployeeDirectory() {
+    const headers = ["Employee ID","Employee Name","Department","Designation","Assigned Site","Reporting Manager","Phone","Email","Date Joined","Status","Login User ID"];
+    const rows = filteredEmployees.map(employee => [employee.employee_code, employee.full_name, employee.department || "", employee.designation || "", sites.find(site => site.id === employee.site_id)?.name || "", employee.reporting_manager || "", employee.phone || "", employee.email || "", employee.date_joined || "", employee.employment_status, teamUsers.find(user => user.user_id === employee.linked_user_id)?.username || ""]);
+    const csv = [headers, ...rows].map(row => row.map(value => '"' + String(value ?? "").replace(/"/g, '""') + '"').join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\\uFEFF" + csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a"); link.href = url; link.download = "PTC_Employee_Directory.csv"; link.click(); URL.revokeObjectURL(url);
+  }
+
   async function createTeamUser(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) return;
@@ -167,6 +237,7 @@ export default function Home() {
   useEffect(() => { void loadProfile(); }, []);
   useEffect(() => { if (profile?.role === "admin" && section === "sites") void loadSites(); }, [profile, section]);
   useEffect(() => { if (profile?.role === "admin" && section === "users") { void loadSites(); void loadTeamUsers(); } }, [profile, section]);
+  useEffect(() => { if (profile?.role === "admin" && section === "employee-directory") { void loadSites(); void loadTeamUsers(); void loadEmployeeDirectory(); } }, [profile, section]);
   useEffect(()=>{if(profile&&["parts-order","orders","parts-receive","receipts"].includes(section)){void loadPartsOrders();if(profile.role!=="storekeeper"){void loadVehicles();if(profile.role==="admin")void loadSites();}}},[profile,section]);
   useEffect(() => {
     if (profile && ["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && profile.role !== "storekeeper") {
@@ -390,6 +461,13 @@ export default function Home() {
       {label:"SUPPORT",items:[{id:"help-guide",label:"Help and user guide",icon:HelpCircle}]}
     ];
   const pageTitle = navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label || (section==="overview"?"Dashboard":section);
+  const filteredEmployees = employees.filter(employee => {
+    const q = employeeSearch.trim().toLowerCase();
+    const matchesSearch = !q || [employee.employee_code, employee.full_name, employee.department, employee.designation, employee.reporting_manager].some(value => (value || "").toLowerCase().includes(q));
+    const matchesStatus = employeeStatusFilter === "all" || employee.employment_status === employeeStatusFilter;
+    const matchesSite = employeeSiteFilter === "all" || employee.site_id === employeeSiteFilter;
+    return matchesSearch && matchesStatus && matchesSite;
+  });
   const breakdownVehicles=vehicles.filter(v=>visitCategory(v.purpose_of_visit)==="breakdown");
   const maintenanceVehicles=vehicles.filter(v=>visitCategory(v.purpose_of_visit)==="maintenance");
 
@@ -538,6 +616,45 @@ export default function Home() {
           <div className="siteFootnote"><LockKeyhole size={15}/> {profile.role==="admin"?"You can view vehicle movements across all sites.":"You can view vehicle movements for your assigned site only."} IN / OUT timestamps are recorded automatically.</div>
           </>}
         </section>}
+        {section==="employee-directory" && profile.role==="admin" && <section className="sitePage">
+          <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Employee Directory</h1><p>Manage every garage and support employee, whether they have an app login or not.</p></div><div className="siteActions"><button className="refreshBtn" onClick={()=>{void loadEmployeeDirectory();void loadTeamUsers();}}><RefreshCw size={16}/> Refresh</button><button className="primaryBtn siteSave" onClick={startNewEmployee}><Plus size={16}/> Add Employee</button></div></div>
+          {employeeFormOpen && <div className="siteFormCard">
+            <div className="siteFormTitle"><div className="siteIcon"><ContactRound size={20}/></div><div><h3>{editingEmployee?"Edit employee details":"Add a new employee"}</h3><p>Login account is optional. You can create the employee record now and link an account later.</p></div></div>
+            <form className="siteForm" onSubmit={saveEmployee}>
+              <div className="siteFields">
+                <label>Employee ID<input value={employeeForm.employee_code} onChange={e=>setEmployeeForm({...employeeForm,employee_code:e.target.value})} placeholder="e.g. EMP001" required maxLength={40}/></label>
+                <label>Employee Name<input value={employeeForm.full_name} onChange={e=>setEmployeeForm({...employeeForm,full_name:e.target.value})} placeholder="Enter full name" required maxLength={120}/></label>
+                <label>Department<input value={employeeForm.department} onChange={e=>setEmployeeForm({...employeeForm,department:e.target.value})} placeholder="e.g. Garage / Transport / Stores"/></label>
+                <label>Designation<input value={employeeForm.designation} onChange={e=>setEmployeeForm({...employeeForm,designation:e.target.value})} placeholder="e.g. Mechanic / Electrician / Driver"/></label>
+                <label>Assigned Site<select value={employeeForm.site_id} onChange={e=>setEmployeeForm({...employeeForm,site_id:e.target.value})}><option value="">Not assigned / Head Office</option>{sites.map(site=><option key={site.id} value={site.id}>{site.name}{site.is_active?"":" (Inactive)"}</option>)}</select></label>
+                <label>Reporting Manager<input value={employeeForm.reporting_manager} onChange={e=>setEmployeeForm({...employeeForm,reporting_manager:e.target.value})} placeholder="Manager name"/></label>
+                <label>Phone<input type="tel" value={employeeForm.phone} onChange={e=>setEmployeeForm({...employeeForm,phone:e.target.value})} placeholder="Contact number"/></label>
+                <label>Email<input type="email" value={employeeForm.email} onChange={e=>setEmployeeForm({...employeeForm,email:e.target.value})} placeholder="name@company.com"/></label>
+                <label>Date Joined<input type="date" value={employeeForm.date_joined} onChange={e=>setEmployeeForm({...employeeForm,date_joined:e.target.value})}/></label>
+                <label>Employment Status<select value={employeeForm.employment_status} onChange={e=>setEmployeeForm({...employeeForm,employment_status:e.target.value as EmployeeForm["employment_status"]})}><option>Active</option><option>Inactive</option><option>On Leave</option></select></label>
+                <label className="siteAddress">Link Login Account (Optional)<select value={employeeForm.linked_user_id} onChange={e=>setEmployeeForm({...employeeForm,linked_user_id:e.target.value})}><option value="">No login account linked</option>{teamUsers.map(user=><option key={user.user_id} value={user.user_id}>{user.full_name} · {user.username||user.role}</option>)}</select></label>
+                <label className="siteAddress">Notes<textarea className="employeeNotes" value={employeeForm.notes} onChange={e=>setEmployeeForm({...employeeForm,notes:e.target.value})} placeholder="Additional employee details (optional)" rows={3}/></label>
+              </div>
+              {employeeMessage && <div className={employeeMessage.includes("successfully")||employeeMessage.includes(" is now ")? "siteSuccess":"siteError"}>{employeeMessage}</div>}
+              <div className="siteFormActions"><button type="button" className="secondaryBtn" onClick={()=>{setEmployeeFormOpen(false);setEditingEmployee(null);setEmployeeForm(emptyEmployeeForm());}}><X size={15}/> Cancel</button><button className="primaryBtn siteSave" disabled={employeeSaving}>{employeeSaving?"Saving...":editingEmployee?"Save Changes":"Save Employee"} <Plus size={16}/></button></div>
+            </form>
+          </div>}
+          <div className="siteFormCard employeeDirectoryTools">
+            <div className="employeeDirectoryFilters">
+              <label>Search employee<input value={employeeSearch} onChange={e=>setEmployeeSearch(e.target.value)} placeholder="Search ID, name, department, designation..."/></label>
+              <label>Status<select value={employeeStatusFilter} onChange={e=>setEmployeeStatusFilter(e.target.value)}><option value="all">All statuses</option><option>Active</option><option>Inactive</option><option>On Leave</option></select></label>
+              <label>Assigned Site<select value={employeeSiteFilter} onChange={e=>setEmployeeSiteFilter(e.target.value)}><option value="all">All sites</option>{sites.map(site=><option key={site.id} value={site.id}>{site.name}</option>)}</select></label>
+              <button className="secondaryBtn employeeExport" type="button" onClick={exportEmployeeDirectory}><Upload size={15}/> Export CSV</button>
+            </div>
+          </div>
+          <div className="siteListHeader"><div><h3>All employees</h3><p>{employees.filter(employee=>employee.employment_status==="Active").length} active · {employees.length} total employee records</p></div><span className="siteCount">{filteredEmployees.length} Showing</span></div>
+          {employeeMessage && !employeeFormOpen && <div className={employeeMessage.includes("successfully")||employeeMessage.includes(" is now ")? "siteSuccess":"siteError"} style={{marginBottom:14}}>{employeeMessage}</div>}
+          {employeesLoading?<div className="siteEmpty"><div className="spinner"/> Loading employee directory...</div>:<div className="siteTableWrap"><table className="siteTable employeeTable"><thead><tr><th>Employee</th><th>Department</th><th>Designation</th><th>Assigned Site</th><th>Reporting Manager</th><th>Login Account</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+            {filteredEmployees.map(employee=><tr key={employee.id}><td><div className="employeeNameCell"><span className="employeeAvatar">{employee.full_name.trim().split(/\s+/).map(part=>part[0]).slice(0,2).join("").toUpperCase()}</span><span><b>{employee.full_name}</b><small>{employee.employee_code}</small></span></div></td><td>{employee.department||"—"}</td><td>{employee.designation||"—"}</td><td>{sites.find(site=>site.id===employee.site_id)?.name||"—"}</td><td>{employee.reporting_manager||"—"}</td><td>{employee.linked_user_id?(teamUsers.find(user=>user.user_id===employee.linked_user_id)?.username||"Linked"):"No login"}</td><td><span className={employee.employment_status==="Active"?"statusActive":"statusInactive"}>{employee.employment_status}</span></td><td><div className="siteActions"><button type="button" className="iconAction" onClick={()=>startEditEmployee(employee)}><Pencil size={14}/> Edit</button><button type="button" className={employee.employment_status==="Active"?"iconAction deactivate":"iconAction activate"} onClick={()=>toggleEmployeeStatus(employee)}><Power size={14}/>{employee.employment_status==="Active"?"Deactivate":"Activate"}</button></div></td></tr>)}
+            {filteredEmployees.length===0&&<tr><td colSpan={8}>No employees match your search. Add an employee or change the filters.</td></tr>}
+          </tbody></table></div>}
+          <div className="siteFootnote"><LockKeyhole size={15}/> Employee records are separate from login accounts. Creating, editing or deactivating a directory record does not create or disable a sign-in account.</div>
+        </section>}
         {section==="users" && profile.role==="admin" && <section className="sitePage">
           <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>User Management</h1><p>Create Supervisor and Store Keeper accounts and control access.</p></div><button className="refreshBtn" onClick={loadTeamUsers}><RefreshCw size={16}/> Refresh</button></div>
           <div className="siteFormCard">
@@ -579,7 +696,7 @@ export default function Home() {
           {sitesLoading?<div className="siteEmpty"><div className="spinner"/> Loading sites...</div>:sites.length===0?<div className="siteEmpty">No sites found. Add your first site using the form above.</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Site</th><th>Site code</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody>{sites.map(site=><tr key={site.id}><td><div className="siteNameCell"><span className="siteRowIcon"><MapPin size={16}/></span><b>{site.name}</b></div></td><td><span className="siteCode">{site.code}</span></td><td>{site.address||"—"}</td><td><span className={site.is_active?"statusActive":"statusInactive"}>{site.is_active?"Active":"Inactive"}</span></td><td><div className="siteActions"><button type="button" className="iconAction" title="Edit site" onClick={()=>startEdit(site)}><Pencil size={15}/> Edit</button><button type="button" className={site.is_active?"iconAction deactivate":"iconAction activate"} title={site.is_active?"Deactivate site":"Activate site"} onClick={()=>toggleSite(site)}><Power size={15}/>{site.is_active?"Deactivate":"Activate"}</button></div></td></tr>)}</tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> Deactivating a site does not delete its existing vehicle, parts or history records.</div>
         </section>}
-        {!["overview","sites","users","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
+        {!["overview","sites","users","employee-directory","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{navGroups.flatMap(group=>group.items).find(item=>item.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
       </div>
     </section>
   </main>;
