@@ -56,6 +56,15 @@ export default function Home() {
   const [receiptQty,setReceiptQty]=useState("1");
   const [receiptRemarks,setReceiptRemarks]=useState("");
   const [receiptSaving,setReceiptSaving]=useState(false);
+  const [teamUsers,setTeamUsers]=useState<Profile[]>([]);
+  const [usersLoading,setUsersLoading]=useState(false);
+  const [userSaving,setUserSaving]=useState(false);
+  const [userMessage,setUserMessage]=useState("");
+  const [newUserId,setNewUserId]=useState("");
+  const [newUserName,setNewUserName]=useState("");
+  const [newUserPassword,setNewUserPassword]=useState("");
+  const [newUserRole,setNewUserRole]=useState<"supervisor"|"storekeeper">("supervisor");
+  const [newUserSiteId,setNewUserSiteId]=useState("");
 
 
   const configured = Boolean(supabase);
@@ -89,6 +98,43 @@ export default function Home() {
     setCounts({ inGarage: vehicles.count || 0, openOrders: orders.count || 0, receivedToday: receipts.count || 0, users: users.count || 0 });
   }
 
+  async function loadTeamUsers() {
+    if (!supabase) return;
+    setUsersLoading(true); setUserMessage("");
+    const { data, error } = await supabase.from("profiles").select("user_id,username,full_name,role,site_id,is_active").order("full_name");
+    if (error) setUserMessage("Could not load users: " + error.message);
+    else setTeamUsers((data || []) as Profile[]);
+    setUsersLoading(false);
+  }
+
+  async function createTeamUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase) return;
+    if (newUserRole === "supervisor" && !newUserSiteId) { setUserMessage("Please assign a site to this Supervisor."); return; }
+    setUserSaving(true); setUserMessage("");
+    const { data, error } = await supabase.functions.invoke("manage-user", { body: {
+      action: "create", userId: newUserId.trim(), fullName: newUserName.trim(), password: newUserPassword,
+      role: newUserRole, siteId: newUserRole === "supervisor" ? newUserSiteId : null
+    }});
+    if (error || data?.error) setUserMessage("Could not create account: " + (data?.error || error?.message || "Unknown error"));
+    else {
+      setUserMessage("User account created successfully. Share the User ID and password securely with the employee.");
+      setNewUserId(""); setNewUserName(""); setNewUserPassword(""); setNewUserRole("supervisor"); setNewUserSiteId("");
+      await loadTeamUsers(); await loadCounts(profile!);
+    }
+    setUserSaving(false);
+  }
+
+  async function toggleUserActive(user: Profile) {
+    if (!supabase || user.role === "admin") return;
+    const next = !user.is_active;
+    if (!window.confirm((next ? "Activate " : "Deactivate ") + (user.username || user.full_name) + "?")) return;
+    setUserMessage("");
+    const { data, error } = await supabase.functions.invoke("manage-user", { body: { action: "set_active", userId: user.user_id, isActive: next } });
+    if (error || data?.error) setUserMessage("Could not update user: " + (data?.error || error?.message || "Unknown error"));
+    else { setUserMessage("User " + (next ? "activated" : "deactivated") + " successfully."); await loadTeamUsers(); }
+  }
+
   async function loadSites() {
     if (!supabase) return;
     setSitesLoading(true); setSiteMessage("");
@@ -100,6 +146,7 @@ export default function Home() {
 
   useEffect(() => { void loadProfile(); }, []);
   useEffect(() => { if (profile?.role === "admin" && section === "sites") void loadSites(); }, [profile, section]);
+  useEffect(() => { if (profile?.role === "admin" && section === "users") { void loadSites(); void loadTeamUsers(); } }, [profile, section]);
   useEffect(()=>{if(profile&&(section==="orders"||section==="receipts")){void loadPartsOrders();if(profile.role!=="storekeeper"){void loadVehicles();if(profile.role==="admin")void loadSites();}}},[profile,section]);
   useEffect(() => {
     if (profile && section === "vehicles" && profile.role !== "storekeeper") {
@@ -370,6 +417,29 @@ export default function Home() {
             {vehicles.filter(v=>vehicleFilter==="ALL" || v.status===vehicleFilter).length===0 && <tr><td colSpan={8}>No vehicle records found.</td></tr>}
           </tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> {profile.role==="admin"?"You can view vehicle movements across all sites.":"You can view vehicle movements for your assigned site only."} IN / OUT timestamps are recorded automatically.</div>
+        </section>}
+        {section==="users" && profile.role==="admin" && <section className="sitePage">
+          <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>User Management</h1><p>Create Supervisor and Store Keeper accounts and control access.</p></div><button className="refreshBtn" onClick={loadTeamUsers}><RefreshCw size={16}/> Refresh</button></div>
+          <div className="siteFormCard">
+            <div className="siteFormTitle"><div className="siteIcon"><Users size={20}/></div><div><h3>Create a team account</h3><p>Supervisor must be assigned to one active site. Store Keeper can view parts records across all sites.</p></div></div>
+            <form className="siteForm" onSubmit={createTeamUser}>
+              <div className="siteFields">
+                <label>User ID<input value={newUserId} onChange={e=>setNewUserId(e.target.value)} placeholder="e.g. SUP001" minLength={3} maxLength={32} pattern="[A-Za-z0-9._-]+" required/></label>
+                <label>Full name<input value={newUserName} onChange={e=>setNewUserName(e.target.value)} placeholder="Employee full name" minLength={2} maxLength={100} required/></label>
+                <label>Password<input type="password" value={newUserPassword} onChange={e=>setNewUserPassword(e.target.value)} placeholder="At least 12 characters" minLength={12} required autoComplete="new-password"/></label>
+                <label>Role<select value={newUserRole} onChange={e=>setNewUserRole(e.target.value as "supervisor"|"storekeeper")}><option value="supervisor">Supervisor</option><option value="storekeeper">Store Keeper</option></select></label>
+                {newUserRole==="supervisor" && <label>Assigned site<select value={newUserSiteId} onChange={e=>setNewUserSiteId(e.target.value)} required><option value="">Select site</option>{sites.filter(site=>site.is_active).map(site=><option key={site.id} value={site.id}>{site.name}</option>)}</select></label>}
+              </div>
+              {userMessage && <div className={userMessage.includes("successfully")?"siteSuccess":"siteError"}>{userMessage}</div>}
+              <div className="siteFormActions"><button className="primaryBtn siteSave" disabled={userSaving}>{userSaving?"Creating account...":"Create account"} <Plus size={17}/></button></div>
+            </form>
+          </div>
+          <div className="siteListHeader"><div><h3>Team accounts</h3><p>{teamUsers.filter(u=>u.is_active).length} active · {teamUsers.length} total accounts</p></div><span className="siteCount">{teamUsers.length} Users</span></div>
+          {usersLoading?<div className="siteEmpty">Loading team accounts...</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Employee</th><th>User ID</th><th>Role</th><th>Assigned site</th><th>Status</th><th>Action</th></tr></thead><tbody>
+            {teamUsers.map(user=><tr key={user.user_id}><td><b>{user.full_name}</b></td><td><span className="siteCode">{user.username||"—"}</span></td><td>{user.role==="admin"?"Admin":user.role==="supervisor"?"Supervisor":"Store Keeper"}</td><td>{user.role==="supervisor"?(sites.find(site=>site.id===user.site_id)?.name||"—"):"All sites (parts only)"}</td><td><span className={user.is_active?"statusActive":"statusInactive"}>{user.is_active?"Active":"Inactive"}</span></td><td>{user.role==="admin"?<span className="siteFootnote">Protected</span>:<button type="button" className={user.is_active?"iconAction deactivate":"iconAction activate"} onClick={()=>toggleUserActive(user)}><Power size={15}/>{user.is_active?"Deactivate":"Activate"}</button>}</td></tr>)}
+            {teamUsers.length===0&&<tr><td colSpan={6}>No user accounts found.</td></tr>}
+          </tbody></table></div>}
+          <div className="siteFootnote"><LockKeyhole size={15}/> Passwords are not displayed after creation. Deactivated users are blocked at sign-in; existing records remain unchanged.</div>
         </section>}
         {section==="sites" && profile.role==="admin" && <section className="sitePage">
           <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>Manage your garage locations</h1><p>Add new sites, update details and control which locations are active.</p></div><button className="refreshBtn" onClick={loadSites}><RefreshCw size={16}/> Refresh</button></div>
