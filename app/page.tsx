@@ -154,9 +154,9 @@ export default function Home() {
   useEffect(() => { void loadProfile(); }, []);
   useEffect(() => { if (profile?.role === "admin" && section === "sites") void loadSites(); }, [profile, section]);
   useEffect(() => { if (profile?.role === "admin" && section === "users") { void loadSites(); void loadTeamUsers(); } }, [profile, section]);
-  useEffect(()=>{if(profile&&(section==="orders"||section==="receipts")){void loadPartsOrders();if(profile.role!=="storekeeper"){void loadVehicles();if(profile.role==="admin")void loadSites();}}},[profile,section]);
+  useEffect(()=>{if(profile&&["parts-order","orders","parts-receive","receipts"].includes(section)){void loadPartsOrders();if(profile.role!=="storekeeper"){void loadVehicles();if(profile.role==="admin")void loadSites();}}},[profile,section]);
   useEffect(() => {
-    if (profile && section === "vehicles" && profile.role !== "storekeeper") {
+    if (profile && ["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history"].includes(section) && profile.role !== "storekeeper") {
       void loadVehicles();
       if (profile.role === "admin") void loadSites();
     }
@@ -325,8 +325,8 @@ export default function Home() {
 
   const isStore = profile.role === "storekeeper";
   const nav = isStore
-    ? [{id:"overview",label:"Overview",icon:LayoutDashboard},{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes}]
-    : [{id:"overview",label:"Overview",icon:LayoutDashboard},{id:"vehicles",label:"Vehicle IN / OUT",icon:CarFront},{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes},...(profile.role==="admin" ? [{id:"users",label:"User Management",icon:Users},{id:"sites",label:"Site Management",icon:Building2}] : [])];
+    ? [{id:"overview",label:"Overview",icon:LayoutDashboard},{id:"orders",label:"Parts Order History",icon:Package},{id:"receipts",label:"Parts Received History",icon:Boxes}]
+    : [{id:"overview",label:"Overview",icon:LayoutDashboard},{id:"vehicle-in",label:"Vehicle IN",icon:CarFront},{id:"vehicle-out",label:"Vehicle OUT",icon:LogOut},{id:"vehicle-in-history",label:"IN History",icon:ClipboardList},{id:"vehicle-out-history",label:"OUT History",icon:ClipboardList},{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes},{id:"orders",label:"Parts Order History",icon:ClipboardList},{id:"receipts",label:"Parts Received History",icon:ClipboardList},...(profile.role==="admin" ? [{id:"users",label:"User Management",icon:Users},{id:"sites",label:"Site Management",icon:Building2}] : [])];
 
   return <main className="appShell">
     <aside className="sidebar"><div className="brand sideBrand"><div className="brandMark"><Wrench size={21}/></div><span>PTC <b>GARAGE</b></span></div>
@@ -335,10 +335,10 @@ export default function Home() {
     </aside>
     <section className="mainArea"><header className="topbar"><div><span className="eyebrow dark">PTC GARAGE / {section.toUpperCase()}</span><h2>{section==="overview"?"Dashboard":nav.find(n=>n.id===section)?.label}</h2></div><div className="topRight"><span className="liveDot"/> <span>System online</span><div className="topAvatar">{greeting.slice(0,1).toUpperCase()}</div></div></header>
       <div className="content">\n
-        {section==="orders"&&<section className="sitePage partsPage">
-          <div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>Parts Orders</h1><p>Create a request with multiple part lines.</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
+        {(section==="parts-order"||section==="orders")&&<section className="sitePage partsPage">
+          <div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>{section==="parts-order"?"Parts Order":"Parts Order History"}</h1><p>{section==="parts-order"?"Create a new parts request with multiple part lines.":"Review and update parts request records."}</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
           {partsMessage&&<div className={partsMessage.includes("successfully")?"siteSuccess":"siteError"}>{partsMessage}</div>}
-          {profile.role!=="storekeeper"&&<div className="siteFormCard"><div className="siteFormTitle"><div className="siteIcon"><Package size={20}/></div><div><h3>Create parts request</h3><p>Each part is stored as a separate order under the same vehicle visit.</p></div></div><form className="siteForm" onSubmit={submitPartsOrder}>
+          {section==="parts-order"&&profile.role!=="storekeeper"&&<div className="siteFormCard"><div className="siteFormTitle"><div className="siteIcon"><Package size={20}/></div><div><h3>Create parts request</h3><p>Each part is stored as a separate order under the same vehicle visit.</p></div></div><form className="siteForm" onSubmit={submitPartsOrder}>
             <div className="siteFields">{profile.role==="admin"&&<label>Site<select value={orderSiteId} onChange={e=>{setOrderSiteId(e.target.value);setOrderVehicleId("");}} required><option value="">Select site</option>{sites.filter(x=>x.is_active).map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}
             <label className="siteAddress">Vehicle (optional)<select value={orderVehicleId} onChange={e=>setOrderVehicleId(e.target.value)}><option value="">General parts request</option>{vehicles.filter(v=>v.status==="IN"&&(profile.role==="admin"?v.site_id===orderSiteId:v.site_id===profile.site_id)).map(v=><option key={v.id} value={v.id}>{(v.ptc_id||"No PTC ID")+" · "+v.vehicle_type}</option>)}</select></label></div>
             <div className="partLinesHeading"><b>Parts list</b><button type="button" className="secondaryBtn" onClick={()=>setPartLines([...partLines,{part_name:"",part_number:"",quantity:"1",unit:"Pcs",priority:"normal",notes:""}])}><Plus size={15}/> Add part</button></div>
@@ -350,6 +350,7 @@ export default function Home() {
               <label>Priority<select value={x.priority} onChange={e=>setPartLines(partLines.map((z,j)=>j===i?{...z,priority:e.target.value}:z))}><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="high">High</option></select></label>
               <label>Remarks<input value={x.notes} onChange={e=>setPartLines(partLines.map((z,j)=>j===i?{...z,notes:e.target.value}:z))}/></label></div></div>)}
             <div className="siteFormActions"><button className="primaryBtn siteSave" disabled={partsSaving}>{partsSaving?"Submitting...":"Submit parts request"} <ArrowUpRight size={17}/></button></div></form></div>}
+          {section==="orders"&&<>
           <div className="siteListHeader"><div><h3>{profile.role==="storekeeper"?"All parts requests":"Parts order history"}</h3><p>{partOrders.length} order line(s) · old records retained</p></div></div>
           <div className="vehicleFilters">{["all","ordered","purchased","partially_received","received"].map(v=><button key={v} className={partsFilter===v?"filterActive":"filterBtn"} onClick={()=>setPartsFilter(v)}>{v==="all"?"All":v==="partially_received"?"Part received":v==="purchased"?"Purchased":v==="received"?"Completed":"Ordered"}</button>)}</div>
           {partsLoading?<div className="siteEmpty">Loading parts orders...</div>:<div className="siteTableWrap"><table className="siteTable partsTable"><thead><tr><th>Site</th><th>PTC ID</th><th>Vehicle</th><th>Part</th><th>Quantity</th><th>Status</th><th>Request</th><th>Invoice / Cost</th>{profile.role==="storekeeper"&&<th>Store update</th>}</tr></thead><tbody>
@@ -357,17 +358,20 @@ export default function Home() {
           {profile.role==="storekeeper"&&<td><div className="storeEditForm">{(["request_number","request_date","invoice_number","invoice_date","invoice_cost"] as const).map(k=><label key={k}>{({request_number:"Request No.",request_date:"Request Date",invoice_number:"Invoice No.",invoice_date:"Invoice Date",invoice_cost:"Cost"} as any)[k]}<input type={k.endsWith("date")?"date":k==="invoice_cost"?"number":"text"} step={k==="invoice_cost"?"0.01":undefined} value={storeEdits[o.id]?.[k]??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{request_number:"",request_date:"",invoice_number:"",invoice_date:"",invoice_cost:"",invoice_currency:"AED"}),[k]:e.target.value}}))}/></label>)}<label>Currency<select value={storeEdits[o.id]?.invoice_currency||"AED"} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{request_number:"",request_date:"",invoice_number:"",invoice_date:"",invoice_cost:""}),invoice_currency:e.target.value}}))}><option>AED</option><option>USD</option><option>INR</option><option>EUR</option></select></label><button type="button" className="primaryBtn siteSave" disabled={partsSaving} onClick={()=>saveStoreOrder(o.id)}>Save details</button></div></td>}</tr>)}
           {partOrders.filter(o=>partsFilter==="all"||o.status===partsFilter).length===0&&<tr><td colSpan={profile.role==="storekeeper"?9:8}>No orders found.</td></tr>}</tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/>{profile.role==="storekeeper"?"Store Keeper can update request and purchase fields only.":"Supervisors see their assigned site; Admin sees all sites."}</div>
+          </>}
         </section>}
-        {section==="receipts"&&<section className="sitePage partsPage"><div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>Parts Received</h1><p>Record actual delivery at the garage and review receiving history.</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
+        {(section==="parts-receive"||section==="receipts")&&<section className="sitePage partsPage"><div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>{section==="parts-receive"?"Parts Received":"Parts Received History"}</h1><p>{section==="parts-receive"?"Record the parts physically received at your garage.":"Review all physical parts receipt records."}</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
           {partsMessage&&<div className={partsMessage.includes("successfully")?"siteSuccess":"siteError"}>{partsMessage}</div>}
-          {profile.role!=="storekeeper"&&<div className="siteFormCard"><div className="siteFormTitle"><div className="siteIcon"><Boxes size={20}/></div><div><h3>Confirm garage receipt</h3><p>Enter the quantity physically received.</p></div></div><form className="siteForm" onSubmit={savePartsReceipt}><div className="siteFields">
+          {section==="parts-receive"&&profile.role!=="storekeeper"&&<div className="siteFormCard"><div className="siteFormTitle"><div className="siteIcon"><Boxes size={20}/></div><div><h3>Confirm garage receipt</h3><p>Enter the quantity physically received.</p></div></div><form className="siteForm" onSubmit={savePartsReceipt}><div className="siteFields">
             <label className="siteAddress">Parts order<select required value={receiptOrderId} onChange={e=>setReceiptOrderId(e.target.value)}><option value="">Select open order</option>{partOrders.filter(o=>o.status!=="received").map(o=><option key={o.id} value={o.id}>{o.site_name+" · "+o.part_name+" · "+o.quantity+" "+o.unit}</option>)}</select></label>
             <label>Quantity received<input type="number" min="0.01" step="0.01" value={receiptQty} onChange={e=>setReceiptQty(e.target.value)}/></label><label>Remarks<input value={receiptRemarks} onChange={e=>setReceiptRemarks(e.target.value)}/></label></div><div className="siteFormActions"><button className="primaryBtn siteSave" disabled={receiptSaving||!receiptOrderId}>{receiptSaving?"Saving...":"Confirm receipt"}</button></div></form></div>}
+          {section==="receipts"&&<>
           <div className="siteListHeader"><div><h3>Receiving history</h3><p>Includes partial deliveries and completion history.</p></div><span className="siteCount">{partOrders.reduce((n,o)=>n+o.receipts.length,0)} Receipts</span></div>
           {partsLoading?<div className="siteEmpty">Loading receipts...</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Date / Time</th><th>Site</th><th>PTC ID</th><th>Part</th><th>Ordered</th><th>Received</th><th>Remarks</th><th>Status</th></tr></thead><tbody>
           {partOrders.flatMap(o=>o.receipts.map((r:any)=><tr key={r.id}><td>{new Date(r.received_at).toLocaleString()}</td><td>{o.site_name}</td><td><span className="ptcIdTag">{o.vehicle?.ptc_id||o.vehicle_ptc_id||"Not Linked"}</span></td><td>{o.part_name}</td><td>{o.quantity} {o.unit}</td><td>{r.quantity_received} {o.unit}</td><td>{r.remarks||"—"}</td><td>{o.status}</td></tr>))}
           {partOrders.every(o=>!o.receipts.length)&&<tr><td colSpan={8}>No receipt records found.</td></tr>}</tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/>{profile.role==="storekeeper"?"View-only receiving history.":"Admin and assigned Supervisor can confirm physical receipt."}</div>
+          </>}
         </section>}
 
         {section==="overview" && <>
@@ -380,18 +384,19 @@ export default function Home() {
           </div>
           <div className="sectionHeading"><div><h3>Quick access</h3><p>Go directly to your daily tasks</p></div></div>
           <div className="quickGrid">
-            {!isStore && <Quick icon={<CarFront/>} title="Vehicle IN / OUT" desc="Register vehicles and manage garage releases" onClick={()=>setSection("vehicles")}/>}
-            <Quick icon={<Package/>} title="Parts Orders" desc="View and manage parts requests" onClick={()=>setSection("orders")}/>
-            <Quick icon={<Boxes/>} title="Parts Received" desc="Review parts receiving records" onClick={()=>setSection("receipts")}/>
+            {!isStore && <Quick icon={<CarFront/>} title="Vehicle IN" desc="Register a vehicle arriving at the garage" onClick={()=>setSection("vehicle-in")}/>}
+            {!isStore && <Quick icon={<LogOut/>} title="Vehicle OUT" desc="Complete release of a vehicle" onClick={()=>setSection("vehicle-out")}/>}
+            <Quick icon={<Package/>} title="Parts Order" desc="Create and submit a parts request" onClick={()=>setSection(isStore?"orders":"parts-order")}/>
+            <Quick icon={<Boxes/>} title="Parts Received" desc="Record or review physical receipt" onClick={()=>setSection(isStore?"receipts":"parts-receive")}/>
             {profile.role==="admin" && <Quick icon={<Users/>} title="User Management" desc="Create and manage team accounts" onClick={()=>setSection("users")}/>}
           </div>
           <div className="notice"><LockKeyhole size={18}/><div><b>Role-based access is enabled</b><p>{isStore?"Your portal is limited to parts orders and receiving. Vehicle records are not available to this account.":profile.role==="supervisor"?"You can manage vehicle and parts operations for your assigned site.":"You have administrator access to all sites and modules."}</p></div></div>
         </>}
-        {section==="vehicles" && profile.role!=="storekeeper" && <section className="sitePage">
-          <div className="siteIntro"><div><span className="eyebrow dark">GARAGE OPERATIONS</span><h1>Vehicle IN / OUT</h1><p>Register vehicles entering the garage and confirm their release with automatic date and time.</p></div><button className="refreshBtn" onClick={loadVehicles}><RefreshCw size={16}/> Refresh</button></div>
+        {["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history"].includes(section) && profile.role!=="storekeeper" && <section className="sitePage">
+          <div className="siteIntro"><div><span className="eyebrow dark">GARAGE OPERATIONS</span><h1>{section==="vehicle-in"?"Vehicle IN":section==="vehicle-out"?"Vehicle OUT":section==="vehicle-in-history"?"Vehicle IN History":"Vehicle OUT History"}</h1><p>{section==="vehicle-in"?"Register a new vehicle arriving at the garage.":section==="vehicle-out"?"Record completed work and confirm vehicle release.":section==="vehicle-in-history"?"Review all vehicle entry records.":"Review all vehicle release records and work details."}</p></div><button className="refreshBtn" onClick={loadVehicles}><RefreshCw size={16}/> Refresh</button></div>
           {vehicleMessage && <div className={vehicleMessage.includes("successfully") ? "siteSuccess" : "siteError"}>{vehicleMessage}</div>}
-          <div className="vehicleForms">
-            <div className="siteFormCard">
+          {(section==="vehicle-in"||section==="vehicle-out")&&<div className="vehicleForms">
+            {section==="vehicle-in"&&<div className="siteFormCard">
               <div className="siteFormTitle"><div className="siteIcon"><CarFront size={20}/></div><div><h3>Vehicle IN</h3><p>Record a new vehicle arriving at the garage.</p></div></div>
               <form className="siteForm" onSubmit={saveVehicleIn}>
                 <div className="siteFields">
@@ -406,8 +411,8 @@ export default function Home() {
                 </div>
                 <div className="siteFormActions"><button className="primaryBtn siteSave" disabled={vehicleSaving}>{vehicleSaving?"Saving...":"Register Vehicle IN"} <ArrowUpRight size={17}/></button></div>
               </form>
-            </div>
-            <div className="siteFormCard">
+            </div>}
+            {section==="vehicle-out"&&<div className="siteFormCard">
               <div className="siteFormTitle"><div className="siteIcon"><LogOut size={20}/></div><div><h3>Vehicle OUT</h3><p>Only vehicles currently inside the garage can be released.</p></div></div>
               <form className="siteForm" onSubmit={saveVehicleOut}>
                 <div className="siteFields">
@@ -416,14 +421,16 @@ export default function Home() {
                 </div>
                 <div className="siteFormActions"><button className="primaryBtn siteSave" disabled={vehicleSaving || !selectedOutId}>{vehicleSaving?"Saving...":"Confirm Vehicle OUT"} <ArrowUpRight size={17}/></button></div>
               </form>
-            </div>
-          </div>
-          <div className="siteListHeader"><div><h3>Vehicle records</h3><p>{vehicles.filter(v=>v.status==="IN").length} currently in garage · {vehicles.length} total records</p></div><div className="vehicleFilters"><button className={vehicleFilter==="IN"?"filterActive":"filterBtn"} onClick={()=>setVehicleFilter("IN")}>Currently IN</button><button className={vehicleFilter==="OUT"?"filterActive":"filterBtn"} onClick={()=>setVehicleFilter("OUT")}>Vehicle OUT</button><button className={vehicleFilter==="ALL"?"filterActive":"filterBtn"} onClick={()=>setVehicleFilter("ALL")}>All History</button></div></div>
+            </div>}
+          </div>}
+          { (section==="vehicle-in-history"||section==="vehicle-out-history")&&<>
+          <div className="siteListHeader"><div><h3>{section==="vehicle-in-history"?"Vehicle IN records":"Vehicle OUT records"}</h3><p>{vehicles.filter(v=>v.status==="IN").length} currently in garage · {vehicles.length} total records</p></div><span className="siteCount">{vehicles.filter(v=>v.status===(section==="vehicle-in-history"?"IN":"OUT")).length} Records</span></div>
           {vehicleLoading?<div className="siteEmpty"><div className="spinner"/> Loading vehicle records...</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>PTC ID</th><th>Vehicle Type</th><th>Complaint</th><th>IN Date / Time</th><th>OUT Date / Time</th><th>Garage Duration</th><th>Work Details</th><th>Status</th></tr></thead><tbody>
-            {vehicles.filter(v=>vehicleFilter==="ALL" || v.status===vehicleFilter).map(v=><tr key={v.id}><td><b>{v.ptc_id||"—"}</b></td><td>{v.vehicle_type}</td><td>{v.complaint}</td><td>{new Date(v.in_at).toLocaleString()}</td><td>{v.out_at?new Date(v.out_at).toLocaleString():"—"}</td><td>{formatDuration(v.in_at,v.out_at)}</td><td>{v.work_details?.length ? v.work_details.map(w=>`${w.name} (${w.designation}): ${w.work_done}`).join("; ") : "—"}</td><td><span className={v.status==="IN"?"statusActive":"statusInactive"}>{v.status}</span></td></tr>)}
-            {vehicles.filter(v=>vehicleFilter==="ALL" || v.status===vehicleFilter).length===0 && <tr><td colSpan={8}>No vehicle records found.</td></tr>}
+            {vehicles.filter(v=>v.status===(section==="vehicle-in-history"?"IN":"OUT")).map(v=><tr key={v.id}><td><b>{v.ptc_id||"—"}</b></td><td>{v.vehicle_type}</td><td>{v.complaint}</td><td>{new Date(v.in_at).toLocaleString()}</td><td>{v.out_at?new Date(v.out_at).toLocaleString():"—"}</td><td>{formatDuration(v.in_at,v.out_at)}</td><td>{v.work_details?.length ? v.work_details.map(w=>`${w.name} (${w.designation}): ${w.work_done}`).join("; ") : "—"}</td><td><span className={v.status==="IN"?"statusActive":"statusInactive"}>{v.status}</span></td></tr>)}
+            {vehicles.filter(v=>v.status===(section==="vehicle-in-history"?"IN":"OUT")).length===0 && <tr><td colSpan={8}>No vehicle records found.</td></tr>}
           </tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> {profile.role==="admin"?"You can view vehicle movements across all sites.":"You can view vehicle movements for your assigned site only."} IN / OUT timestamps are recorded automatically.</div>
+          </>}
         </section>}
         {section==="users" && profile.role==="admin" && <section className="sitePage">
           <div className="siteIntro"><div><span className="eyebrow dark">ADMINISTRATION</span><h1>User Management</h1><p>Create Supervisor and Store Keeper accounts and control access.</p></div><button className="refreshBtn" onClick={loadTeamUsers}><RefreshCw size={16}/> Refresh</button></div>
@@ -466,7 +473,7 @@ export default function Home() {
           {sitesLoading?<div className="siteEmpty"><div className="spinner"/> Loading sites...</div>:sites.length===0?<div className="siteEmpty">No sites found. Add your first site using the form above.</div>:<div className="siteTableWrap"><table className="siteTable"><thead><tr><th>Site</th><th>Site code</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody>{sites.map(site=><tr key={site.id}><td><div className="siteNameCell"><span className="siteRowIcon"><MapPin size={16}/></span><b>{site.name}</b></div></td><td><span className="siteCode">{site.code}</span></td><td>{site.address||"—"}</td><td><span className={site.is_active?"statusActive":"statusInactive"}>{site.is_active?"Active":"Inactive"}</span></td><td><div className="siteActions"><button type="button" className="iconAction" title="Edit site" onClick={()=>startEdit(site)}><Pencil size={15}/> Edit</button><button type="button" className={site.is_active?"iconAction deactivate":"iconAction activate"} title={site.is_active?"Deactivate site":"Activate site"} onClick={()=>toggleSite(site)}><Power size={15}/>{site.is_active?"Deactivate":"Activate"}</button></div></td></tr>)}</tbody></table></div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> Deactivating a site does not delete its existing vehicle, parts or history records.</div>
         </section>}
-        {section!=="overview" && section!=="sites" && section!=="vehicles" && section!=="orders" && section!=="receipts" && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{nav.find(n=>n.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
+        {!["overview","sites","users","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts"].includes(section) && <div className="comingCard"><div className="comingIcon"><Wrench size={25}/></div><span className="eyebrow dark">MODULE READY FOR NEXT BUILD STEP</span><h2>{nav.find(n=>n.id===section)?.label}</h2><p>The dashboard shell and role permissions are in place. This module will be connected to the live Supabase tables in the next build step.</p><button className="textBtn" onClick={()=>setSection("overview")}>Back to overview <ArrowUpRight size={16}/></button></div>}
       </div>
     </section>
   </main>;
