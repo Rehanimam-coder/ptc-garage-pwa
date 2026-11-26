@@ -374,7 +374,10 @@ export default function Home() {
     if(!supabase)return;const x=storeEdits[id];if(!x)return;const cost=String(x.invoice_cost||"").trim();
     if(cost&&(!Number.isFinite(Number(cost))||Number(cost)<0)){setPartsMessage("Enter a valid invoice cost.");return;}
     setPartsSaving(true);setPartsMessage("");
-    const {error}=await supabase.from("parts_orders").update({request_number:x.request_number.trim()||null,request_date:x.request_date||null,invoice_number:x.invoice_number.trim()||null,invoice_date:x.invoice_date||null,invoice_cost:cost?Number(cost):null,invoice_currency:x.invoice_currency||"AED"}).eq("id",id);
+    const currentOrder=partOrders.find(o=>o.id===id);
+    const payload:any={request_number:x.request_number.trim()||null,request_date:x.request_date||null,invoice_number:x.invoice_number.trim()||null,invoice_date:x.invoice_date||null,invoice_cost:cost?Number(cost):null,invoice_currency:x.invoice_currency||"AED"};
+    if(currentOrder?.status==="ordered"&&x.invoice_number.trim())payload.status="purchased";
+    const {error}=await supabase.from("parts_orders").update(payload).eq("id",id);
     if(error)setPartsMessage("Could not save: "+error.message);else{setPartsMessage("Store details saved successfully.");await loadPartsOrders();}setPartsSaving(false);
   }
   async function savePartsReceipt(e:React.FormEvent){
