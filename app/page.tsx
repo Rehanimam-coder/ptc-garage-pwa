@@ -340,7 +340,7 @@ export default function Home() {
       v.in_remark,v.out_remark,(v.work_details||[]).map(w=>w.name+" ("+w.designation+"): "+w.work_done).join(" | "),v.site_id
     ]);
     const csv=[headers,...values].map(row=>row.map(value=>'"'+String(value??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
-    const blob=new Blob(["\\uFEFF",csv],{type:"text/csv;charset=utf-8;"});
+    const blob=new Blob(["\uFEFF",csv],{type:"text/csv;charset=utf-8;"});
     const url=URL.createObjectURL(blob);const link=document.createElement("a");
     link.href=url;link.download="PTC_Garage_Report_"+reportFrom+"_to_"+reportTo+".csv";
     document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
