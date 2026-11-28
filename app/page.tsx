@@ -26,6 +26,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [checking, setChecking] = useState(true);
   const [section, setSection] = useState("overview");
+  const [customRecordView, setCustomRecordView] = useState<"grid"|"list">("grid");
   const [language, setLanguage] = useState<"en" | "ar">("en");
   useEffect(() => {
     document.documentElement.lang = language;
@@ -521,7 +522,8 @@ export default function Home() {
       <div className="sideBottom"><div className="userChip"><div className="avatar">{(profile.full_name||profile.username||"U").slice(0,1).toUpperCase()}</div><div><b>{profile.full_name}</b><small>{profile.role==="storekeeper"?"Store Keeper":profile.role==="admin"?"Administrator":"Supervisor"}</small></div></div><button className="logoutBtn" onClick={logout}><LogOut size={17}/> {tr("Sign out")}</button></div>
     </aside>
     <section className="mainArea"><header className="topbar"><div><span className="eyebrow dark">PTC MAINTENANCE</span><h2>{pageTitle}</h2></div><div className="topRight"><button type="button" className="languageToggle" onClick={()=>setLanguage(language==="en"?"ar":"en")} aria-label="Switch language">{language==="en"?"عربي":"EN"}</button><button type="button" className="mobileLogoutBtn" onClick={logout}><LogOut size={16}/><span>{tr("Sign out")}</span></button><span className="liveDot"/> <span>{tr("System online")}</span><div className="topAvatar">{greeting.slice(0,1).toUpperCase()}</div></div></header>
-      <div className="content">
+      <div className={`content ${customRecordView==="list"?"recordsListMode":""}`}>
+        {["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","employee-directory","users","sites"].includes(section) && <div className="recordViewToolbar" role="group" aria-label="Record display mode"><span>View</span><button type="button" className={customRecordView==="grid"?"active":""} aria-pressed={customRecordView==="grid"} onClick={()=>setCustomRecordView("grid")}><Boxes size={15}/> Grid View</button><button type="button" className={customRecordView==="list"?"active":""} aria-pressed={customRecordView==="list"} onClick={()=>setCustomRecordView("list")}><ClipboardList size={15}/> List View</button></div>}
         {["overview","home","my-actions","my-profile"].includes(section) && <ReferencePages section={section} profile={profile!} sites={sites} onNavigate={setSection} language={language} onLanguageChange={setLanguage}/> }
         {(section==="parts-order"||section==="orders")&&<section className="sitePage partsPage">
           <div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>{section==="parts-order"?"Parts Order":"Parts Order History"}</h1><p>{section==="parts-order"?"Create a new parts request with multiple part lines.":"Review and update parts request records."}</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
