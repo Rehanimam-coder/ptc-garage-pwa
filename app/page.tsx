@@ -515,7 +515,7 @@ export default function Home() {
   });
   const breakdownVehicles=vehicles.filter(v=>visitCategory(v.purpose_of_visit)==="breakdown");
   const stagePartOrders=partOrders.filter(o=>section==="new-requests"?(!o.request_number||!o.request_date):section==="parts-purchasing"?(!!o.request_number&&!!o.request_date):true);
-  const filteredPartOrders=stagePartOrders.filter(o=>partsFilter==="all"||o.status===partsFilter);
+  const filteredPartOrders=stagePartOrders.filter(o=>section==="new-requests"||partsFilter==="all"||o.status===partsFilter);
 
   return <ArabicTranslator language={language}><main className="appShell">
     <aside className="sidebar"><div className="brand sideBrand"><img className="ptcLogo" src="/ptc-logo.svg" alt="PTC Since 1969"/></div>
@@ -559,7 +559,14 @@ export default function Home() {
             {o.notes&&<p className="recordCardNote">{o.notes}</p>}
             {section==="new-requests"&&(profile.role==="storekeeper"||profile.role==="admin")&&<div className="storeEditForm recordCardStoreEdit"><div className="storeEditHeading"><div><b>Request registration</b><small>Enter the manually generated request reference</small></div><span>NEW REQUEST</span></div>
               <section className="storeEditSection"><label>Request Number<input type="text" placeholder="Enter request number" value={storeEdits[o.id]?.request_number??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),request_number:e.target.value}}))}/></label><label>Request Date<input type="date" value={storeEdits[o.id]?.request_date??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),request_date:e.target.value}}))}/></label></section>
-              <button type="button" className="primaryBtn siteSave" disabled={partsSaving} onClick={()=>saveStoreRequest(o.id)}>{partsSaving?"Saving...":"Save Request Number & Date"}</button></div>}
+              {profile.role==="admin"&&<><section className="storeEditSection"><div className="storeEditSectionTitle"><span>02</span><div><b>Supplier and invoice details</b><small>Admin can edit the complete purchasing record</small></div></div>
+                <label>Supplier Company Name<input value={storeEdits[o.id]?.supplier_company_name??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),supplier_company_name:e.target.value}}))}/></label>
+                <label>Invoice Number<input value={storeEdits[o.id]?.invoice_number??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),invoice_number:e.target.value}}))}/></label>
+                <label>Invoice Date<input type="date" value={storeEdits[o.id]?.invoice_date??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),invoice_date:e.target.value}}))}/></label>
+                <div className="storeEditCostRow"><label>Total Cost<input type="number" min="0" step="0.01" value={storeEdits[o.id]?.invoice_cost??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),invoice_cost:e.target.value}}))}/></label>
+                <label>Currency<select value={storeEdits[o.id]?.invoice_currency||"AED"} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),invoice_currency:e.target.value}}))}><option>AED</option><option>USD</option><option>INR</option><option>EUR</option></select></label></div>
+              </section><button type="button" className="primaryBtn siteSave" disabled={partsSaving} onClick={()=>saveStoreOrder(o.id)}>{partsSaving?"Saving...":"Save all purchasing details"}</button></>}
+              {profile.role==="storekeeper"&&<button type="button" className="primaryBtn siteSave" disabled={partsSaving} onClick={()=>saveStoreRequest(o.id)}>{partsSaving?"Saving...":"Save Request Number & Date"}</button>}</div>}
             {section==="parts-purchasing"&&canEditPurchasing&&<div className="storeEditForm recordCardStoreEdit"><div className="storeEditHeading"><div><b>Purchasing information</b><small>{locked&&profile.role==="storekeeper"?"Invoice details completed — this record is locked.":profile.role==="admin"?"Admin can edit all request and invoice details.":"Enter supplier invoice and total cost."}</small></div><span>{locked&&profile.role==="storekeeper"?"LOCKED":profile.role==="admin"?"ADMIN EDIT":"PURCHASING"}</span></div>
               <section className="storeEditSection"><div className="storeEditSectionTitle"><span>01</span><div><b>Request details</b><small>Manually registered reference</small></div></div>
                 {profile.role==="admin"&&<><label>Request Number<input type="text" value={storeEdits[o.id]?.request_number??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),request_number:e.target.value}}))}/></label><label>Request Date<input type="date" value={storeEdits[o.id]?.request_date??""} onChange={e=>setStoreEdits(p=>({...p,[o.id]:{...(p[o.id]||{}),request_date:e.target.value}}))}/></label></>}
