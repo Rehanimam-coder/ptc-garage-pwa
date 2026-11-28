@@ -163,7 +163,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
         <button type="button" className="toolbarIconButton" title="Export visible records" onClick={exportRecords} disabled={!filtered.length}>↓</button>
         <span>{filtered.length} records</span>
       </div>
-      {loading?<div className="siteEmpty">Loading records...</div>:filtered.length===0?<div className="siteEmpty">No records found. Add a new record to get started.</div>:<div className="recordCardGrid">
+      {loading?<div className="siteEmpty">Loading records...</div>:filtered.length===0?<div className="siteEmpty">No records found. Add a new record to get started.</div>:<div className={viewMode==="cards"?"recordCardGrid":"recordCardGrid recordCardGridCompact"}>
         {filtered.map(row=>{const titleField=config.fields.find(f=>/ptc_id|part_name|asset_name|maintenance_work|vehicle_type|item_name|name|title/i.test(f.key));const title=titleField&&row[titleField.key]?String(row[titleField.key]):config.title+" record";const statusField=config.fields.find(f=>/status|priority/i.test(f.key));const highlights=config.fields.filter(f=>f.key!==titleField?.key&&row[f.key]!==null&&row[f.key]!==undefined&&row[f.key]!=="").slice(0,4);return <article className="recordCard" key={row.id}>
           <div className="recordCardHead"><div className="recordCardTitle"><span className="recordCardEyebrow">{siteName(row.site_id)}</span><h3>{title}</h3><small>{row.id}</small></div>{statusField&&row[statusField.key]&&<span className="recordStatus">{String(row[statusField.key])}</span>}</div>
           <div className="recordCardFields">{highlights.map(f=><div className="recordCardField" key={f.key}><small>{f.label}</small><b>{String(row[f.key])}</b></div>)}</div>
