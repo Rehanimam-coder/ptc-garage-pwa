@@ -5,6 +5,7 @@
   "compatibility_date": "2026-11-28",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "previews": {},
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
