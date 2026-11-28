@@ -46,7 +46,7 @@ jobs:
             sh -eu -c 'pg_restore --list "/backups/$BACKUP_FILE" >/dev/null'
           sha256sum "backups/$BACKUP_FILE" > "backups/$BACKUP_FILE.sha256"
 
-      - name: Store encrypted GitHub Actions artifact
+      - name: Store private GitHub Actions artifact
         uses: actions/upload-artifact@v4
         with:
           name: ptc-garage-db-backup-${{ github.run_id }}
