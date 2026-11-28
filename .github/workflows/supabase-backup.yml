@@ -1,0 +1,55 @@
+name: Supabase database backup
+
+on:
+  schedule:
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Validate backup secret
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Add SUPABASE_DB_URL in repository Actions secrets before running backups."
+            exit 1
+          fi
+
+      - name: Create PostgreSQL 17 backup
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_FILE: ptc-garage-${{ github.run_id }}-${{ github.run_attempt }}.dump
+        run: |
+          mkdir -p backups
+          docker run --rm \
+            -e SUPABASE_DB_URL \
+            -e BACKUP_FILE \
+            -v "$PWD/backups:/backups" \
+            postgres:17-alpine \
+            sh -eu -c 'pg_dump "$SUPABASE_DB_URL" --format=custom --no-owner --no-acl --file="/backups/$BACKUP_FILE"'
+          test -s "backups/$BACKUP_FILE"
+          docker run --rm \
+            -e BACKUP_FILE \
+            -v "$PWD/backups:/backups" \
+            postgres:17-alpine \
+            sh -eu -c 'pg_restore --list "/backups/$BACKUP_FILE" >/dev/null'
+          sha256sum "backups/$BACKUP_FILE" > "backups/$BACKUP_FILE.sha256"
+
+      - name: Store private GitHub Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ptc-garage-db-backup-${{ github.run_id }}
+          path: backups/
+          if-no-files-found: error
+          retention-days: 14
