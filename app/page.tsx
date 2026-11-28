@@ -441,7 +441,7 @@ export default function Home() {
   }
 
   const storekeeperSections = new Set(["orders","receipts","general-stores","parts-purchasing","notifications","my-profile","help-guide"]);
-  const supervisorSections = new Set(["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","ptc-assets","parts-order","parts-receive","orders","receipts","general-stores","parts-purchasing"]);
+  const supervisorSections = new Set(["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","ptc-assets","parts-order","parts-receive","orders","receipts","general-stores","parts-purchasing","help-guide"]);
   const sectionAllowed = !profile || profile.role === "admin" || (profile.role === "storekeeper" ? storekeeperSections.has(section) : supervisorSections.has(section));
   useEffect(() => {
     if (profile && !sectionAllowed) setSection(profile.role === "storekeeper" ? "orders" : profile.role === "supervisor" ? "vehicle-in" : "overview");
@@ -481,7 +481,7 @@ export default function Home() {
     : profile.role === "supervisor"
     ? [
       {label:"VEHICLE MANAGEMENT",items:[{id:"vehicle-in",label:"Vehicle IN",icon:CarFront},{id:"vehicle-out",label:"Vehicle OUT",icon:LogOut},{id:"vehicle-in-history",label:"IN History",icon:ClipboardList},{id:"vehicle-out-history",label:"OUT History",icon:Truck},{id:"ptc-assets",label:"PTC assets",icon:Truck}]},
-      {label:"PARTS AND SERVICES",items:[{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes},{id:"orders",label:"Parts Order History",icon:ClipboardList},{id:"receipts",label:"Parts Received History",icon:PackageSearch},{id:"general-stores",label:"General Stores",icon:PackageSearch},{id:"parts-purchasing",label:"Parts and purchasing",icon:ShoppingCart}]}
+      {label:"PARTS AND SERVICES",items:[{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes},{id:"orders",label:"Parts Order History",icon:ClipboardList},{id:"receipts",label:"Parts Received History",icon:PackageSearch},{id:"general-stores",label:"General Stores",icon:PackageSearch},{id:"parts-purchasing",label:"Parts and purchasing",icon:ShoppingCart},{id:"help-guide",label:"User guide",icon:HelpCircle}]}
     ]
     : [
       {label:"OVERVIEW",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard},{id:"my-actions",label:"My actions",icon:ClipboardCheck},{id:"home",label:"Home",icon:HomeIcon},{id:"notifications",label:"Notifications",icon:Bell},{id:"my-profile",label:"My profile",icon:UserRound}]},
