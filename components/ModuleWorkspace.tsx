@@ -47,6 +47,9 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
   const [formOpen,setFormOpen] = useState(false);
   const [editing,setEditing] = useState<any|null>(null);
   const [form,setForm] = useState<Record<string,string>>({});
+  const [breakdownMode,setBreakdownMode] = useState<"easy"|"advanced">("easy");
+  const [breakdownSummary,setBreakdownSummary] = useState("");
+  const [breakdownFaultType,setBreakdownFaultType] = useState("Mechanical");
   const [siteId,setSiteId] = useState(profile.site_id || "");
   const [search,setSearch] = useState("");
   const [statusFilter,setStatusFilter] = useState("all");
@@ -100,14 +103,18 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     const {data,error}=await supabase.from("notifications").select("*").order("created_at",{ascending:false}).limit(200);
     if(error)setMessage("Could not load notifications: "+error.message);else setRows(data||[]);
   }
-  function startAdd(){if(!config)return;setEditing(null);setForm(empty(config.fields));setFormOpen(true);setMessage("");}
-  function startEdit(row:any){if(!config)return;setEditing(row);setForm(Object.fromEntries(config.fields.map(f=>[f.key,row[f.key]==null?"":String(row[f.key]).slice(0,10)])));setFormOpen(true);setMessage("");}
+  function startAdd(){if(!config)return;setEditing(null);setForm(empty(config.fields));setBreakdownMode("easy");setBreakdownSummary("");setBreakdownFaultType("Mechanical");setFormOpen(true);setMessage("");}
+  function startEdit(row:any){if(!config)return;setEditing(row);setForm(Object.fromEntries(config.fields.map(f=>[f.key,row[f.key]==null?"":String(row[f.key]).slice(0,10)])));setBreakdownMode("advanced");setBreakdownSummary("");setBreakdownFaultType("Mechanical");setFormOpen(true);setMessage("");}
   async function save(e:React.FormEvent){
     e.preventDefault(); if(!supabase||!config)return;
     const actualSite = (isAdmin || (profile.role === "storekeeper" && config.table === "general_store_items")) ? siteId : profile.site_id;
     if(config.table!=="tasks_projects" && !actualSite){setMessage("Please select or request an assigned site.");return;}
     const payload:any={};
     config.fields.forEach(f=>{const v=form[f.key]?.trim()||null;payload[f.key]=f.type==="number"?(v===null?null:Number(v)):v;});
+    if(section==="breakdowns"){
+      const description=form.complaint?.trim()||"";
+      payload.complaint=[`Summary: ${breakdownSummary.trim()}`,`Fault type: ${breakdownFaultType}`,description].filter(Boolean).join("\\n\\n");
+    }
     if(config.table!=="tasks_projects")payload.site_id=actualSite;
     else payload.site_id=actualSite||null;
     if(!editing)payload.created_by=profile.user_id;
@@ -149,7 +156,30 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
       {formOpen&&<div className="siteFormCard"><div className="siteFormTitle"><div className="siteIcon">＋</div><div><h3>{editing?"Update record":"Add new record"}</h3><p>Fields marked required must be completed.</p></div></div>
         <form className="siteForm" onSubmit={save}>
           {(isAdmin||(profile.role==="storekeeper"&&config.table==="general_store_items"))&&<div className="siteFields"><label>Site<select required value={siteId} onChange={e=>setSiteId(e.target.value)}><option value="">Select site</option>{sites.filter(s=>s.is_active).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label></div>}
-          <div className="siteFields moduleFields">{config.fields.map(f=><label key={f.key}>{f.label}{f.type==="textarea"?<textarea value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>:f.type==="select"?<select value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>{f.options?.map(o=><option key={o}>{o}</option>)}</select>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} min={f.type==="number"?(f.key==="repeat_interval"?"0.01":"0"):undefined} value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>}</label>)}</div>
+          {section==="breakdowns"?<div className="breakdownReportForm">
+            <div className="breakdownModeTabs" role="tablist" aria-label="Breakdown form mode">
+              <button type="button" className={breakdownMode==="easy"?"active":""} onClick={()=>setBreakdownMode("easy")}>Easy mode <small>Quick report</small></button>
+              <button type="button" className={breakdownMode==="advanced"?"active":""} onClick={()=>setBreakdownMode("advanced")}>Advanced mode <small>More job details</small></button>
+            </div>
+            <div className="breakdownFormGrid">
+              <section className="breakdownFormPanel">
+                <div className="breakdownPanelHeading"><span className="breakdownStep">01</span><div><h4>Select the asset</h4><p>Identify the vehicle or equipment that needs attention.</p></div></div>
+                <div className="siteFields">
+                  <label>PTC ID<input value={form.ptc_id||""} required placeholder="Enter PTC ID" onChange={e=>setForm(p=>({...p,ptc_id:e.target.value}))}/></label>
+                  <label>Vehicle / equipment<input value={form.vehicle_type||""} required placeholder="e.g. Pickup, bus, generator" onChange={e=>setForm(p=>({...p,vehicle_type:e.target.value}))}/></label>
+                </div>
+              </section>
+              <section className="breakdownFormPanel">
+                <div className="breakdownPanelHeading"><span className="breakdownStep">02</span><div><h4>Describe the problem</h4><p>Give the workshop a clear picture of the issue.</p></div></div>
+                <div className="siteFields">
+                  <label>Problem summary<input value={breakdownSummary} required placeholder="Short title for this breakdown" onChange={e=>setBreakdownSummary(e.target.value)}/></label>
+                  <label>Fault type<select value={breakdownFaultType} onChange={e=>setBreakdownFaultType(e.target.value)}>{["Mechanical","Electrical","Tyre / wheel","Hydraulic","Engine","Body / exterior","Other"].map(x=><option key={x}>{x}</option>)}</select></label>
+                  <label className="breakdownDescriptionField">Problem description<textarea value={form.complaint||""} required placeholder="Describe the symptoms, when they started, and any warning signs..." onChange={e=>setForm(p=>({...p,complaint:e.target.value}))}/></label>
+                </div>
+              </section>
+            </div>
+            {breakdownMode==="advanced"&&<section className="breakdownFormPanel breakdownAdvancedPanel"><div className="breakdownPanelHeading"><span className="breakdownStep">03</span><div><h4>Job details</h4><p>Set priority, ownership and repair tracking information.</p></div></div><div className="siteFields moduleFields">{config.fields.filter(f=>!["ptc_id","vehicle_type","complaint"].includes(f.key)).map(f=><label key={f.key}>{f.label}{f.type==="textarea"?<textarea value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>:f.type==="select"?<select value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>{f.options?.map(o=><option key={o}>{o}</option>)}</select>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>}</label>)}</div></section>}
+          </div>:<div className="siteFields moduleFields">{config.fields.map(f=><label key={f.key}>{f.label}{f.type==="textarea"?<textarea value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>:f.type==="select"?<select value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>{f.options?.map(o=><option key={o}>{o}</option>)}</select>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} min={f.type==="number"?(f.key==="repeat_interval"?"0.01":"0"):undefined} value={form[f.key]||""} required={f.required} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>}</label>)}</div>}
           <div className="siteFormActions"><button type="button" className="secondaryBtn" onClick={()=>setFormOpen(false)}>Cancel</button><button className="primaryBtn siteSave" disabled={saving}>{saving?"Saving...":editing?"Save changes":"Save record"}</button></div>
         </form>
       </div>}
