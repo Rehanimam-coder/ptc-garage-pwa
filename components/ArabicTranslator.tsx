@@ -71,7 +71,7 @@ const translations: Record<string, string> = {
   "Problem / complaint":"المشكلة / الشكوى","Job status":"حالة العمل","Work started":"بدء العمل","Completed date":"تاريخ الإكمال","Responsible person":"الشخص المسؤول","Repeat by":"التكرار حسب","Repeat interval":"فترة التكرار",
   "Last completed meter value":"آخر قراءة عداد عند الإكمال","Current meter value":"قراءة العداد الحالية","Expected due date":"تاريخ الاستحقاق المتوقع","Asset name":"اسم الأصل","Asset type":"نوع الأصل","Serial number":"الرقم التسلسلي","Make / model":"الشركة المصنعة / الطراز",
   "Item code":"رمز الصنف","Item name":"اسم الصنف","Quantity on hand":"الكمية المتوفرة","Reorder level":"حد إعادة الطلب","Task / project title":"عنوان المهمة / المشروع","Description":"الوصف","Assigned to (User ID / name)":"مخصص إلى (معرّف المستخدم / الاسم)","Due date":"تاريخ الاستحقاق",
-  "Could not load records: ":"تعذر تحميل السجلات: ","Could not save: ":"تعذر الحفظ: ","Record updated successfully.":"تم تحديث السجل بنجاح.","Record added successfully.":"تمت إضافة السجل بنجاح."
+  "Could not load records: ":"تعذر تحميل السجلات: ","Could not save: ":"تعذر الحفظ: ","Record updated successfully.":"تم تحديث السجل بنجاح.","Record added successfully.":"تمت إضافة السجل بنجاح.",
 
   "Breakdown Management":"إدارة الأعطال","Record workshop issues, assign responsibility and track repair progress.":"سجّل مشكلات الورشة، وحدد المسؤول عنها، وتابع تقدم الإصلاح.",
   "Preventive Maintenance":"الصيانة الوقائية","Set up recurring maintenance schedules and monitor due dates by time, distance or operating hours.":"أنشئ جداول صيانة دورية وتابع مواعيد الاستحقاق حسب الوقت أو المسافة أو ساعات التشغيل.",
