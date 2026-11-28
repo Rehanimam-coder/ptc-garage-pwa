@@ -123,14 +123,14 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     setSaving(true);setMessage("");
     const result=editing?await supabase.from(config.table).update(payload).eq("id",editing.id):await supabase.from(config.table).insert(payload).select("id").single();
     if(result.error)setMessage("Could not save: "+result.error.message);
-    else{await logAction(editing?"update":"create",section,editing?.id||result.data?.id,payload);setMessage(editing?"Record updated successfully.":"Record added successfully.");setFormOpen(false);setEditing(null);await load();}
+    else{setMessage(editing?"Record updated successfully.":"Record added successfully.");setFormOpen(false);setEditing(null);await load();}
     setSaving(false);
   }
   async function remove(row:any){
     if(!supabase||!config||!isAdmin)return;
     if(!window.confirm("Delete this record? This cannot be undone."))return;
     const {error}=await supabase.from(config.table).delete().eq("id",row.id);
-    if(error)setMessage("Could not delete: "+error.message);else{await logAction("delete",section,row.id);await load();}
+    if(error)setMessage("Could not delete: "+error.message);else{await load();}
   }
   const statusKey = useMemo(()=>config?.fields.find(f=>/^(status|order_status|employment_status|priority)$/i.test(f.key))?.key || "",[config]);
   const statusOptions = useMemo(()=>Array.from(new Set(rows.map(r=>String(statusKey ? r[statusKey] || "" : "").trim()).filter(Boolean))).sort(),[rows,statusKey]);
