@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import MaintenanceHistory from "@/components/MaintenanceHistory";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null };
 type Site = { id: string; name: string; is_active: boolean };
@@ -196,6 +197,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
   if(section==="master-data")return <MasterData profile={profile}/>;
   if(section==="historical-imports")return <HistoricalImports profile={profile}/>;
   if(section==="ask-ptc-data")return <AskData/>;
+  if(section==="maintenance-history")return <MaintenanceHistory profile={profile} sites={sites}/>;
   if(section==="centralized-reports")return <CentralReports profile={profile} sites={sites}/>;
   if(section==="parts-purchasing")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">PARTS AND SERVICES</span><h1>Parts and purchasing</h1><p>Purchasing updates are handled in Parts Order History to keep request, invoice and receipt records linked.</p></div></div><p className="siteFootnote">Open Parts Order History to enter Request Number, Request Date, Invoice Number, Invoice Date and Cost. Store Keeper can see all sites; vehicle details remain hidden from Store Keeper.</p></section>;
   if(section==="help-guide")return <section className="sitePage"><div className="siteIntro"><div><span className="eyebrow dark">SUPPORT</span><h1>Help and user guide</h1><p>Quick instructions for the PTC Garage workspace.</p></div></div><div className="helpGrid"><article><h3>Vehicle IN / OUT</h3><p>Register a vehicle at the assigned garage, record the complaint and purpose, then use Vehicle OUT to record work details and release time.</p></article><article><h3>Parts workflow</h3><p>Supervisors raise parts requests. Store Keeper enters request and invoice details. Garage staff confirms physical receipt.</p></article><article><h3>Maintenance</h3><p>Create preventive maintenance schedules and update status, meter values and due dates as work progresses.</p></article><article><h3>Access control</h3><p>Admin manages all sites. Supervisors work within assigned sites. Store Keeper has parts-only access across sites.</p></article></div></section>;
