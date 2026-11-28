@@ -44,7 +44,7 @@ begin
       where p.is_active = true
         and (p.role = 'admin' or (p.role = 'supervisor' and p.site_id = v_site_id))
     loop
-      perform private.insert_notification(v_recipient.user_id, v_title, case when v_recipient.role = 'storekeeper' then v_part_name || ' · ' || v_request_number || ' · Status: ' || coalesce(new.status, 'new') else v_message end, v_category, v_module, v_record_id, v_dedupe || ':' || v_recipient.user_id::text);
+      perform private.insert_notification(v_recipient.user_id, v_title, v_message, v_category, v_module, v_record_id, v_dedupe || ':' || v_recipient.user_id::text);
     end loop;
 
   elsif tg_table_name = 'parts_orders' then
@@ -73,7 +73,7 @@ begin
       where p.is_active = true
         and (p.role in ('admin', 'storekeeper') or (p.role = 'supervisor' and p.site_id = v_site_id))
     loop
-      perform private.insert_notification(v_recipient.user_id, v_title, v_message, v_category, v_module, v_record_id, v_dedupe || ':' || v_recipient.user_id::text);
+      perform private.insert_notification(v_recipient.user_id, v_title, case when v_recipient.role = 'storekeeper' then v_part_name || ' · ' || v_request_number || ' · Status: ' || coalesce(new.status, 'new') else v_message end, v_category, v_module, v_record_id, v_dedupe || ':' || v_recipient.user_id::text);
     end loop;
 
   elsif tg_table_name = 'parts_receipts' then
