@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatDate, formatDateTime } from "@/lib/date-format";
 import MaintenanceHistory from "@/components/MaintenanceHistory";
+import GeneralStoreHistory from "@/components/GeneralStoreHistory";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null };
 type Site = { id: string; name: string; is_active: boolean };
@@ -207,6 +208,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
         </article>;})}
       </div>}
       {(section==="breakdowns"||section==="maintenance")&&<><div className="siteListHeader"><div><h3>Previous vehicle visit records</h3><p>Records from the previous Vehicle IN / OUT process are available here.</p></div><span className="siteCount">{legacyRows.length} Records</span></div>{legacyRows.length===0?<div className="siteEmpty">No previous records were found for this category.</div>:<div className="recordCardGrid">{legacyRows.map(v=><article className="recordCard" key={v.id}><div className="recordCardHead"><div className="recordCardTitle"><span className="recordCardEyebrow">{v.ptc_id||"No PTC ID"}</span><h3>{v.vehicle_type||"Vehicle visit"}</h3><small>{v.purpose_of_visit||"—"}</small></div><span className="recordStatus">{v.status||"—"}</span></div><div className="recordCardFields">{[{label:"Problem / work",value:v.complaint},{label:"IN date",value:v.in_at?formatDateTime(v.in_at):"—"},{label:"OUT date",value:v.out_at?formatDateTime(v.out_at):"—"}].map(x=><div className="recordCardField" key={x.label}><small>{x.label}</small><b>{x.value||"—"}</b></div>)}</div><details className="recordCardDetails"><summary>View record details <span>→</span></summary><div className="recordCardFields expanded">{Object.entries(v).filter(([key,value])=>!["id","site_id","created_by","user_id"].includes(key)&&value!==null&&value!==undefined&&value!=="").map(([key,value])=><div className="recordCardField" key={key}><small>{key.replace(/_/g," ")}</small><b>{/(^|_)(at|date|time)$/.test(key)&&!Number.isNaN(Date.parse(String(value)))?formatDateTime(String(value)):String(value)}</b></div>)}</div></details></article>)}</div>}</>}
+      {section === "general-stores" && <GeneralStoreHistory profile={profile} sites={sites}/>}
       <div className="siteFootnote">Access is controlled by role and site permissions. Supervisors can access their assigned sites, while Store Keeper access is limited to parts and stores.</div>
     </section>;
   }
