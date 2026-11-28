@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "ptc-garage-pwa",
+  "name": "ptc-garage-pwa-preview",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-11-28",
   "compatibility_flags": ["nodejs_compat"],
