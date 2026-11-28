@@ -466,7 +466,7 @@ export default function Home() {
     ? [
       {label:"OVERVIEW",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard},{id:"my-actions",label:"My actions",icon:ClipboardCheck},{id:"home",label:"Home",icon:HomeIcon},{id:"notifications",label:"Notifications",icon:Bell},{id:"my-profile",label:"My profile",icon:UserRound}]},
       {label:"PARTS AND SERVICES",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes},{id:"general-stores",label:"General Stores",icon:PackageSearch},{id:"parts-purchasing",label:"Parts and purchasing",icon:ShoppingCart}]},
-      {label:"COLLABORATION",items:[{id:"tasks-projects",label:"Tasks and projects",icon:BriefcaseBusiness},{id:"private-chat",label:"Private chat",icon:MessageCircle}]},
+      {label:"COLLABORATION",items:[{id:"private-chat",label:"Private chat",icon:MessageCircle}]},
       {label:"INSIGHTS",items:[{id:"centralized-reports",label:"Centralized reports",icon:BarChart3},{id:"help-guide",label:"Help and user guide",icon:HelpCircle}]}
     ]
     : [
