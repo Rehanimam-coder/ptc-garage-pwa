@@ -41,17 +41,17 @@ export default function ReferencePages({section,profile,sites,onNavigate,languag
   if(!supabase)return;
   setLoading(true);
   const requests:any[]=[
-   supabase.from("tasks_projects").select("id,title,description,assigned_to,due_date,priority,status,site_id,created_at,updated_at").order("due_date",{ascending:true}).limit(300),
-   supabase.from("preventive_maintenance").select("id,ptc_id,vehicle_type,maintenance_work,repeat_by,repeat_interval,last_done_value,current_value,expected_due_date,responsible_person,status,site_id,created_at,updated_at").order("expected_due_date",{ascending:true}).limit(300)
+   supabase.from("tasks_projects").select("id,title,description,assigned_to,due_date,priority,status,site_id,created_at,updated_at").order("due_date",{ascending:true}).limit(300)
   ];
   if(canSeeVehicles){
+   requests.push(supabase.from("preventive_maintenance").select("id,ptc_id,vehicle_type,maintenance_work,repeat_by,repeat_interval,last_done_value,current_value,expected_due_date,responsible_person,status,site_id,created_at,updated_at").order("expected_due_date",{ascending:true}).limit(300));
    requests.push(supabase.from("breakdown_jobs").select("id,ptc_id,vehicle_type,complaint,priority,status,assigned_to,site_id,created_at,updated_at").order("created_at",{ascending:false}).limit(300));
    requests.push(supabase.from("vehicle_visits").select("id,site_id,ptc_id,vehicle_type,complaint,status,in_at,out_at,purpose_of_visit").order("in_at",{ascending:false}).limit(500));
   }
   const result=await Promise.all(requests);
   setTasks(result[0].error?[]:result[0].data||[]);
-  setPm(result[1].error?[]:result[1].data||[]);
-  if(canSeeVehicles){setBreakdowns(result[2].error?[]:result[2].data||[]);setVisits(result[3].error?[]:result[3].data||[]);}
+  if(canSeeVehicles){setPm(result[1].error?[]:result[1].data||[]);setBreakdowns(result[2].error?[]:result[2].data||[]);setVisits(result[3].error?[]:result[3].data||[]);}
+  else {setPm([]);setBreakdowns([]);setVisits([]);}
   setLoading(false);
  }
  useEffect(()=>{void load();},[section,profile.user_id]);
