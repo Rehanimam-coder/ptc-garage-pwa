@@ -104,7 +104,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     if(error)setMessage("Could not load notifications: "+error.message);else setRows(data||[]);
   }
   function startAdd(){if(!config)return;setEditing(null);setForm(empty(config.fields));setBreakdownMode("easy");setBreakdownSummary("");setBreakdownFaultType("Mechanical");setFormOpen(true);setMessage("");}
-  function startEdit(row:any){if(!config)return;setEditing(row);setForm(Object.fromEntries(config.fields.map(f=>[f.key,row[f.key]==null?"":String(row[f.key]).slice(0,10)])));setBreakdownMode("advanced");setBreakdownSummary("");setBreakdownFaultType("Mechanical");setFormOpen(true);setMessage("");}
+  function startEdit(row:any){if(!config)return;setEditing(row);const values=Object.fromEntries(config.fields.map(f=>[f.key,row[f.key]==null?"":String(row[f.key]).slice(0,10)])) as Record<string,string>;if(section==="breakdowns"){const raw=String(row.complaint||"");const summary=raw.match(/^Summary:\s*(.*)$/m)?.[1]||"";const fault=raw.match(/^Fault type:\s*(.*)$/m)?.[1]||"Mechanical";const description=raw.replace(/^Summary:\s*.*\n?/m,"").replace(/^Fault type:\s*.*\n?/m,"").trim();values.complaint=description;setBreakdownSummary(summary);setBreakdownFaultType(fault);}setForm(values);setBreakdownMode("advanced");setFormOpen(true);setMessage("");}
   async function save(e:React.FormEvent){
     e.preventDefault(); if(!supabase||!config)return;
     const actualSite = (isAdmin || (profile.role === "storekeeper" && config.table === "general_store_items")) ? siteId : profile.site_id;
