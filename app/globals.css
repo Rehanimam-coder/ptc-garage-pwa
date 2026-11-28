@@ -280,3 +280,28 @@ html[dir="rtl"] .loginLanguage{justify-content:flex-start}
 .dashboardModuleGroup .quickCard span{font-size:10px}
 @media(max-width:700px){.dashboardModuleGroup .quickGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.dashboardModuleGroup .quickCard{min-height:118px;padding:12px}}
 @media(max-width:420px){.dashboardModuleGroup .quickGrid{grid-template-columns:1fr}}
+
+
+/* Consistent record cards across data modules */
+.recordCardGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px;align-items:stretch}
+.recordCard{min-width:0;background:#fff;border:1px solid #e1e8ef;border-radius:18px;padding:17px;box-shadow:0 3px 12px rgba(16,36,62,.045);display:flex;flex-direction:column;gap:14px;transition:box-shadow .18s ease,border-color .18s ease}
+.recordCard:hover{border-color:#cbd9e5;box-shadow:0 7px 22px rgba(16,36,62,.08)}
+.recordCardHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-width:0}
+.recordCardTitle{min-width:0}
+.recordCardEyebrow{display:block;color:#087a46;font-size:11px;font-weight:800;letter-spacing:.035em;margin-bottom:5px}
+.recordCardTitle h3{font:800 19px/1.3 Manrope,sans-serif;color:#172b43;margin:0;overflow-wrap:anywhere}
+.recordCardTitle>small{display:block;color:#7b8795;font-size:11px;margin-top:7px;overflow-wrap:anywhere}
+.recordStatus{flex:0 0 auto;border:1px solid #b9dfca;background:#eef8f2;color:#17643e;border-radius:24px;padding:6px 10px;font-size:11px;font-weight:800;max-width:45%;overflow-wrap:anywhere}
+.recordCardFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.recordCardField{min-width:0;background:#f7f9fb;border:1px solid #edf1f4;border-radius:11px;padding:10px 11px}
+.recordCardField small{display:block;color:#718096;text-transform:uppercase;font-size:9px;font-weight:800;letter-spacing:.055em;margin-bottom:5px}
+.recordCardField b{display:block;color:#26394e;font-size:13px;line-height:1.45;font-weight:650;overflow-wrap:anywhere;white-space:pre-wrap}
+.recordCardFoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:2px}
+.recordCardFoot>small{color:#8290a0;font-size:10px}
+.recordCardDetails{border-top:1px solid #edf0f3;padding-top:11px}
+.recordCardDetails summary{cursor:pointer;list-style:none;color:#087a46;font-size:12px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.recordCardDetails summary::-webkit-details-marker{display:none}
+.recordCardDetails[open] summary{margin-bottom:11px}
+.recordCardFields.expanded{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
+.recordCardDetails summary span{font-size:17px}
+@media(max-width:600px){.recordCardGrid{grid-template-columns:1fr;gap:12px}.recordCard{padding:14px;border-radius:15px}.recordCardFields{gap:7px}.recordCardField{padding:9px}.recordCardTitle h3{font-size:17px}}
