@@ -317,3 +317,21 @@ html[dir="rtl"] .loginLanguage{justify-content:flex-start}
 .recordCard .statusPartial{background:#fff7e6;color:#975a00;border:1px solid #f4d69a}
 .recordCardGrid .siteEmpty{grid-column:1/-1}
 @media(max-width:600px){.recordCardStoreEdit{grid-template-columns:1fr}.recordCardStoreEdit button{width:100%}.recordCardFoot{align-items:flex-start;flex-wrap:wrap}}
+
+
+/* Unified Breakdown-style module toolbar */
+.moduleToolbarAdvanced{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 13px;margin:16px 0 18px;background:#fff;border:1px solid #e1e8ef;border-radius:14px;box-shadow:0 3px 12px rgba(16,36,62,.045)}
+.moduleToolbarAdvanced input{height:48px;flex:1 1 280px;min-width:180px;border:1px solid #b9c8d8;border-radius:10px;padding:0 14px;background:#fff;color:#172b43;font:inherit}
+.moduleToolbarAdvanced select{height:48px;min-width:165px;border:1px solid #d5dde7;border-radius:10px;padding:0 12px;background:#fff;color:#172b43;font:inherit}
+.moduleToolbarAdvanced .toolbarChip{height:42px;padding:0 17px;border:1px solid #dce5ed;border-radius:24px;background:#fff;color:#344054;font-weight:750;cursor:pointer}
+.moduleToolbarAdvanced .toolbarChip.active{background:#09683e;border-color:#09683e;color:#fff}
+.moduleToolbarAdvanced .toolbarIconButton{width:44px;height:44px;border:1px solid #b9c8d8;border-radius:10px;background:#fff;color:#344054;font-size:21px;cursor:pointer}
+.moduleToolbarAdvanced .toolbarIconButton[aria-pressed="true"]{border-color:#0b7547;color:#087a46;background:#edf8f2}
+.moduleToolbarAdvanced .toolbarIconButton:disabled{opacity:.4;cursor:not-allowed}
+.moduleToolbarAdvanced>span{margin-left:auto;white-space:nowrap;color:#344054;font-size:12px;font-weight:800}
+.recordCardGridCompact{grid-template-columns:1fr;gap:9px}
+.recordCardGridCompact .recordCard{display:grid;grid-template-columns:minmax(180px,1fr) minmax(260px,2fr) auto;align-items:center;gap:12px;padding:12px 15px;border-radius:12px}
+.recordCardGridCompact .recordCardFields{grid-template-columns:repeat(auto-fit,minmax(115px,1fr))}
+.recordCardGridCompact .recordCardFoot{margin:0;padding:0}
+.recordCardGridCompact .recordCardDetails{grid-column:1/-1}
+@media(max-width:760px){.moduleToolbarAdvanced{align-items:stretch}.moduleToolbarAdvanced input,.moduleToolbarAdvanced select{flex:1 1 100%;width:100%}.moduleToolbarAdvanced .toolbarChip{flex:1}.moduleToolbarAdvanced>span{margin-left:0;width:100%;text-align:right}.recordCardGridCompact .recordCard{display:flex;flex-direction:column;align-items:stretch}}
