@@ -3,6 +3,7 @@
 
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
+grant usage on schema private to authenticated;
 
 alter table public.notifications
   add column if not exists category text,
@@ -81,6 +82,7 @@ end;
 $$;
 
 revoke all on function private.capture_audit_log() from public, anon, authenticated;
+grant execute on function private.capture_audit_log() to authenticated;
 
 do $$
 declare
@@ -241,6 +243,7 @@ end;
 $$;
 
 revoke all on function private.notify_operational_event() from public, anon, authenticated;
+grant execute on function private.notify_operational_event() to authenticated;
 
 drop trigger if exists ptc_breakdown_notifications on public.breakdown_jobs;
 create trigger ptc_breakdown_notifications
