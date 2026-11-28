@@ -26,6 +26,7 @@ export default function GeneralStoreHistory({ profile, sites }: { profile: Profi
   const [people, setPeople] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [viewMode, setViewMode] = useState<"grid"|"list">("grid");
 
   async function load() {
     if (!supabase) return;
@@ -55,7 +56,7 @@ export default function GeneralStoreHistory({ profile, sites }: { profile: Profi
     delete: "Item deleted"
   };
 
-  return <section className="sitePage" style={{ marginTop: 26 }}>
+  return <section className={`sitePage generalStoreHistory ${viewMode==="list"?"generalStoreHistoryList":""}`} style={{ marginTop: 26 }}>
     <div className="siteListHeader">
       <div>
         <h3>General Stores change history</h3>
@@ -63,7 +64,7 @@ export default function GeneralStoreHistory({ profile, sites }: { profile: Profi
       </div>
       <div className="moduleHeaderActions">
         <span className="siteCount">{rows.length} History records</span>
-        <button type="button" className="refreshBtn" onClick={load}>Refresh history</button>
+        <div className="moduleHeaderActions"><button type="button" className={viewMode==="grid"?"toolbarChip active":"toolbarChip"} aria-pressed={viewMode==="grid"} onClick={()=>setViewMode("grid")}>▦ Grid View</button><button type="button" className={viewMode==="list"?"toolbarChip active":"toolbarChip"} aria-pressed={viewMode==="list"} onClick={()=>setViewMode("list")}>☷ List View</button><button type="button" className="refreshBtn" onClick={load}>Refresh history</button></div>
       </div>
     </div>
     {error && <div className="siteError">{error}</div>}
