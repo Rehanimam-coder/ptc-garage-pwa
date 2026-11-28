@@ -113,7 +113,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     config.fields.forEach(f=>{const v=form[f.key]?.trim()||null;payload[f.key]=f.type==="number"?(v===null?null:Number(v)):v;});
     if(section==="breakdowns"){
       const description=form.complaint?.trim()||"";
-      payload.complaint=[`Summary: ${breakdownSummary.trim()}`,`Fault type: ${breakdownFaultType}`,description].filter(Boolean).join("\\n\\n");
+      payload.complaint=[`Summary: ${breakdownSummary.trim()}`,`Fault type: ${breakdownFaultType}`,description].filter(Boolean).join("\n\n");
     }
     if(config.table!=="tasks_projects")payload.site_id=actualSite;
     else payload.site_id=actualSite||null;
