@@ -440,7 +440,15 @@ export default function Home() {
     document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
   }
 
+  const storekeeperSections = new Set(["orders","receipts","general-stores","parts-purchasing","notifications","my-profile","help-guide"]);
+  const supervisorSections = new Set(["overview","my-actions","home","notifications","my-profile","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","ptc-assets","breakdown-dashboard","breakdowns","maintenance","maintenance-history","parts-order","parts-receive","orders","receipts","general-stores","parts-purchasing","tasks-projects","private-chat","reports","help-guide"]);
+  const sectionAllowed = !profile || profile.role === "admin" || (profile.role === "storekeeper" ? storekeeperSections.has(section) : supervisorSections.has(section));
+  useEffect(() => {
+    if (profile && !sectionAllowed) setSection(profile.role === "storekeeper" ? "orders" : "overview");
+  }, [profile, section, sectionAllowed]);
+
   if (checking) return <main className="loading"><div className="spinner"/><span>Loading PTC Garage...</span></main>;
+  if (profile && !sectionAllowed) return <main className="loading"><div className="spinner"/><span>Redirecting to your permitted workspace...</span></main>;
 
   if (!profile) return <ArabicTranslator language={language}><main className="loginShell">
     <section className="loginVisual">
@@ -466,10 +474,9 @@ export default function Home() {
   const isStore = profile.role === "storekeeper";
   const navGroups = isStore
     ? [
-      {label:"OVERVIEW",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard},{id:"my-actions",label:"My actions",icon:ClipboardCheck},{id:"home",label:"Home",icon:HomeIcon},{id:"notifications",label:"Notifications",icon:Bell},{id:"my-profile",label:"My profile",icon:UserRound}]},
+      {label:"OVERVIEW",items:[{id:"notifications",label:"Notifications",icon:Bell},{id:"my-profile",label:"My profile",icon:UserRound}]},
       {label:"PARTS AND SERVICES",items:[{id:"orders",label:"Parts Orders",icon:Package},{id:"receipts",label:"Parts Received",icon:Boxes},{id:"general-stores",label:"General Stores",icon:PackageSearch},{id:"parts-purchasing",label:"Parts and purchasing",icon:ShoppingCart}]},
-      {label:"COLLABORATION",items:[{id:"private-chat",label:"Private chat",icon:MessageCircle}]},
-      {label:"INSIGHTS",items:[{id:"centralized-reports",label:"Centralized reports",icon:BarChart3},{id:"help-guide",label:"Help and user guide",icon:HelpCircle}]}
+      {label:"SUPPORT",items:[{id:"help-guide",label:"Help and user guide",icon:HelpCircle}]}
     ]
     : [
       {label:"OVERVIEW",items:[{id:"overview",label:"Dashboard",icon:LayoutDashboard},{id:"my-actions",label:"My actions",icon:ClipboardCheck},{id:"home",label:"Home",icon:HomeIcon},{id:"notifications",label:"Notifications",icon:Bell},{id:"my-profile",label:"My profile",icon:UserRound}]},
@@ -477,7 +484,7 @@ export default function Home() {
       {label:"MAINTENANCE",items:[{id:"breakdown-dashboard",label:"Breakdown dashboard",icon:Gauge},{id:"breakdowns",label:"Breakdowns and jobs",icon:AlertTriangle},{id:"maintenance",label:"Preventive maintenance",icon:Wrench},{id:"maintenance-history",label:"Maintenance History",icon:History}]},
       {label:"PARTS AND SERVICES",items:[{id:"parts-order",label:"Parts Order",icon:Package},{id:"parts-receive",label:"Parts Received",icon:Boxes},{id:"orders",label:"Parts Order History",icon:ClipboardList},{id:"receipts",label:"Parts Received History",icon:PackageSearch},{id:"general-stores",label:"General Stores",icon:PackageSearch},{id:"parts-purchasing",label:"Parts and purchasing",icon:ShoppingCart}]},
       {label:"COLLABORATION",items:[{id:"tasks-projects",label:"Tasks and projects",icon:BriefcaseBusiness},{id:"private-chat",label:"Private chat",icon:MessageCircle}]},
-      {label:"INSIGHTS",items:[{id:"reports",label:"Report Creation",icon:FileBarChart2},{id:"centralized-reports",label:"Centralized reports",icon:BarChart3}]},
+      {label:"INSIGHTS",items:[{id:"reports",label:"Report Creation",icon:FileBarChart2}]},
       ...(profile.role==="admin" ? [
         {label:"ADMINISTRATION",items:[{id:"employee-directory",label:"Employee directory",icon:ContactRound},{id:"users",label:"Users",icon:Users},{id:"roles-permissions",label:"Roles and permissions",icon:ShieldCheck},{id:"master-data",label:"Master data",icon:Database},{id:"sites",label:"Site Management",icon:Building2},{id:"audit-history",label:"Audit history",icon:ClipboardList},{id:"settings",label:"Settings",icon:Settings},{id:"historical-imports",label:"Historical imports",icon:Upload},{id:"system-health",label:"System health",icon:Activity},{id:"ask-ptc-data",label:"Ask PTC data",icon:BrainCircuit}]}
       ] : []),
