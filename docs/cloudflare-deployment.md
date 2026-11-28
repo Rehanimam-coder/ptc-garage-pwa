@@ -26,10 +26,13 @@ for the Vercel deployment. Do not add a service-role key to the browser-facing a
 ## Deployment safety
 
 The Wrangler config enables the `workers.dev` route and names the Worker
-`ptc-garage-pwa`. It does not configure a custom domain or alter Vercel.
-Do not deploy this branch to the live Worker until the build succeeds and the
-test deployment has been checked for login, role-based access, vehicle IN/OUT,
-parts requests, Store Keeper workflow, and Supabase persistence.
+`ptc-garage-pwa-preview` so the first Cloudflare deployment is isolated from
+the existing `ptc-garage-pwa` Worker and from Vercel. It does not configure a
+custom domain or alter production DNS.
+
+Do not deploy until the build succeeds and the test deployment has been checked
+for login, role-based access, vehicle IN/OUT, parts requests, Store Keeper
+workflow, and Supabase persistence.
 
 After the first successful deployment, confirm the generated Worker URL in
 Cloudflare. Add that URL to the Supabase Auth redirect allow-list before testing
@@ -38,5 +41,5 @@ email/password authentication, if the app's auth flow requires it.
 ## Cloudflare build environment
 
 Cloudflare Workers Builds must have the two public Supabase variables set in its
-Build variables. They are public client configuration values, but should still be
+Build variables. These are client configuration values, but should still be
 entered in the Cloudflare dashboard rather than committed to Git.
