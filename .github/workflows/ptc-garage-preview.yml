@@ -1,6 +1,9 @@
 name: Build and deploy PTC Garage preview
 
 on:
+  push:
+    branches:
+      - feature/storekeeper-parts-request-workflow
   workflow_dispatch:
 
 permissions:
