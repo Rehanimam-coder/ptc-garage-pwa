@@ -22,13 +22,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
       - name: Install pinned Vercel CLI
-        run: npm install --global vercel@41.7.2
+        run: npm install --global vercel@65.8.0
 
       - name: Pull Vercel preview environment
         run: vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
