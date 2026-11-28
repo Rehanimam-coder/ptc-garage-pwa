@@ -48,6 +48,8 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
   const [form,setForm] = useState<Record<string,string>>({});
   const [siteId,setSiteId] = useState(profile.site_id || "");
   const [search,setSearch] = useState("");
+  const [statusFilter,setStatusFilter] = useState("all");
+  const [viewMode,setViewMode] = useState<"cards"|"compact">("cards");
   const [chatText,setChatText] = useState("");
   const [recipientId,setRecipientId] = useState("");
   const [chatUsers,setChatUsers] = useState<any[]>([]);
@@ -120,7 +122,21 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
     const {error}=await supabase.from(config.table).delete().eq("id",row.id);
     if(error)setMessage("Could not delete: "+error.message);else{await logAction("delete",section,row.id);await load();}
   }
-  const filtered = useMemo(()=>rows.filter(r=>JSON.stringify(r).toLowerCase().includes(search.toLowerCase())),[rows,search]);
+  const statusKey = useMemo(()=>config?.fields.find(f=>/^(status|order_status|employment_status|priority)$/i.test(f.key))?.key || "",[config]);
+  const statusOptions = useMemo(()=>Array.from(new Set(rows.map(r=>String(statusKey ? r[statusKey] || "" : "").trim()).filter(Boolean))).sort(),[rows,statusKey]);
+  const filtered = useMemo(()=>rows.filter(r=>{
+    const matchesSearch = JSON.stringify(r).toLowerCase().includes(search.toLowerCase());
+    const status = String(statusKey ? r[statusKey] || "" : "").toLowerCase();
+    const matchesStatus = statusFilter==="all" || (statusFilter==="open" ? !/complete|closed|cancelled|inactive|disposed|paused/i.test(status) : status===statusFilter.toLowerCase());
+    return matchesSearch && matchesStatus;
+  }),[rows,search,statusFilter,statusKey]);
+  function exportRecords(){
+    if(!config || !filtered.length)return;
+    const keys=Array.from(new Set([...config.fields.map(f=>f.key),"id","site_id","created_at","updated_at"]));
+    const csv=[keys,...filtered.map(row=>keys.map(key=>row[key]??""))].map(line=>line.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+    const url=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));
+    const link=document.createElement("a");link.href=url;link.download=section.replace(/[^a-z0-9-]/gi,"_")+"_records.csv";link.click();URL.revokeObjectURL(url);
+  }
 
   if(config){
     if(config.adminOnly && !isAdmin)return <Denied/>;
@@ -135,7 +151,18 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
           <div className="siteFormActions"><button type="button" className="secondaryBtn" onClick={()=>setFormOpen(false)}>Cancel</button><button className="primaryBtn siteSave" disabled={saving}>{saving?"Saving...":editing?"Save changes":"Save record"}</button></div>
         </form>
       </div>}
-      <div className="moduleToolbar"><input placeholder="Search records..." value={search} onChange={e=>setSearch(e.target.value)}/><span>{filtered.length} records</span></div>
+      <div className="moduleToolbar moduleToolbarAdvanced">
+        <input aria-label="Search records" placeholder="Search by ID, name, description, or summary" value={search} onChange={e=>setSearch(e.target.value)}/>
+        <select aria-label="Filter records" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
+          <option value="all">All permitted</option><option value="open">Open / active</option>{statusOptions.map(option=><option key={option} value={option}>{option}</option>)}
+        </select>
+        <button type="button" className={statusFilter==="all"?"toolbarChip active":"toolbarChip"} onClick={()=>setStatusFilter("all")}>All permitted</button>
+        <button type="button" className={statusFilter==="open"?"toolbarChip active":"toolbarChip"} onClick={()=>setStatusFilter("open")}>Open</button>
+        <button type="button" className="toolbarIconButton" title="Show cards" aria-pressed={viewMode==="cards"} onClick={()=>setViewMode("cards")}>▦</button>
+        <button type="button" className="toolbarIconButton" title="Show compact list" aria-pressed={viewMode==="compact"} onClick={()=>setViewMode("compact")}>☷</button>
+        <button type="button" className="toolbarIconButton" title="Export visible records" onClick={exportRecords} disabled={!filtered.length}>↓</button>
+        <span>{filtered.length} records</span>
+      </div>
       {loading?<div className="siteEmpty">Loading records...</div>:filtered.length===0?<div className="siteEmpty">No records found. Add a new record to get started.</div>:<div className="recordCardGrid">
         {filtered.map(row=>{const titleField=config.fields.find(f=>/ptc_id|part_name|asset_name|maintenance_work|vehicle_type|item_name|name|title/i.test(f.key));const title=titleField&&row[titleField.key]?String(row[titleField.key]):config.title+" record";const statusField=config.fields.find(f=>/status|priority/i.test(f.key));const highlights=config.fields.filter(f=>f.key!==titleField?.key&&row[f.key]!==null&&row[f.key]!==undefined&&row[f.key]!=="").slice(0,4);return <article className="recordCard" key={row.id}>
           <div className="recordCardHead"><div className="recordCardTitle"><span className="recordCardEyebrow">{siteName(row.site_id)}</span><h3>{title}</h3><small>{row.id}</small></div>{statusField&&row[statusField.key]&&<span className="recordStatus">{String(row[statusField.key])}</span>}</div>
