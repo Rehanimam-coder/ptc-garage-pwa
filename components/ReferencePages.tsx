@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { formatDate, formatDateTime } from "@/lib/date-format";
 import { Activity, AlertTriangle, CalendarDays, CheckCircle2, Clock3, FileBarChart2, KeyRound, Search, ShieldCheck, UserRound, Wrench, ArrowRight, Bell, Gauge } from "lucide-react";
 
 type Profile = { user_id:string; username:string|null; full_name:string; role:"admin"|"supervisor"|"storekeeper"; site_id:string|null; is_active:boolean };
@@ -84,7 +85,7 @@ export default function ReferencePages({section,profile,sites,onNavigate,languag
   </div>
   <div style={{...panel,padding:"8px 22px"}}>
    {loading?<p style={muted}>Loading actions…</p>:filteredActions.length===0?<p style={muted}>No actions require your attention.</p>:filteredActions.map(item=><article key={item.module+item.id} style={{padding:"16px 0",borderBottom:"1px solid #edf1f5",display:"grid",gridTemplateColumns:"1fr auto",gap:12,alignItems:"center"}}>
-    <div><div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}><small style={{color:"#64748b"}}>{item.module} {item.reference}</small><span style={{border:"1px solid #f59e0b",borderRadius:20,padding:"4px 10px",fontSize:12,color:"#92400e"}}>{item.status}</span></div><h3 style={{fontSize:18,margin:"9px 0",color:"#172033"}}>{item.title}</h3><small style={muted}>Due: {item.due?new Date(item.due+"T00:00:00").toLocaleDateString():"—"}　 Updated: {item.updated?new Date(item.updated).toLocaleDateString():"—"}</small><small style={{display:"block",...muted,marginTop:5}}>{siteName(item.site)} · {item.detail}</small></div>
+    <div><div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}><small style={{color:"#64748b"}}>{item.module} {item.reference}</small><span style={{border:"1px solid #f59e0b",borderRadius:20,padding:"4px 10px",fontSize:12,color:"#92400e"}}>{item.status}</span></div><h3 style={{fontSize:18,margin:"9px 0",color:"#172033"}}>{item.title}</h3><small style={muted}>Due: {item.due?formatDate(item.due+"T00:00:00"):"—"}　 Updated: {item.updated?formatDate(item.updated):"—"}</small><small style={{display:"block",...muted,marginTop:5}}>{siteName(item.site)} · {item.detail}</small></div>
     <button style={button} onClick={()=>onNavigate(item.module==="Breakdown"?"breakdowns":item.module==="Preventive maintenance"?"maintenance":"tasks-projects")}>Open <ArrowRight size={15}/></button>
    </article>)}
   </div>
@@ -100,7 +101,7 @@ export default function ReferencePages({section,profile,sites,onNavigate,languag
    {canSeeVehicles&&<div style={{...panel,background:"#f3fbf7",minHeight:150}}><div style={{...muted}}>Completion rate</div><div style={{fontSize:32,fontWeight:800}}>{completionRate}%</div><small style={muted}>{breakdowns.filter(x=>x.status==="Completed").length} of {breakdowns.length} breakdowns completed.</small></div>}
   </div></div>
   <div style={{...panel,background:"#fffcf2",borderColor:"#f8df83",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><b>Needs attention</b><p style={muted}>Only active records available to your role are shown here.</p></div><div style={{display:"flex",gap:10,flexWrap:"wrap"}}><button style={button} onClick={()=>onNavigate("maintenance")}><CalendarDays size={16}/> Overdue preventive maintenance <b>{overduePm.length}</b></button><button style={button} onClick={()=>onNavigate("my-actions")}><Clock3 size={16}/> Overdue tasks <b>{overdueTasks.length}</b></button></div></div>
-  <div style={panel}><small style={{letterSpacing:2,color:"#087a46",fontWeight:800}}>MAINTENANCE · FILTERED DATES</small><h2 style={{fontSize:20,margin:"5px 0 14px"}}>Maintenance Activity</h2><p style={muted}>{visibleVisits.length} vehicle visit records in selected date range. Results include only records available to your role and assigned sites.</p><div style={grid}>{visibleVisits.slice(0,12).map(v=><article key={v.id} style={{border:"1px solid #e5eaf0",borderRadius:12,padding:14}}><b>{v.ptc_id||"Vehicle"} · {v.vehicle_type}</b><p style={muted}>{v.complaint}</p><small style={muted}>{siteName(v.site_id)} · {new Date(v.in_at).toLocaleDateString()} · {v.status}</small></article>)}</div></div>
+  <div style={panel}><small style={{letterSpacing:2,color:"#087a46",fontWeight:800}}>MAINTENANCE · FILTERED DATES</small><h2 style={{fontSize:20,margin:"5px 0 14px"}}>Maintenance Activity</h2><p style={muted}>{visibleVisits.length} vehicle visit records in selected date range. Results include only records available to your role and assigned sites.</p><div style={grid}>{visibleVisits.slice(0,12).map(v=><article key={v.id} style={{border:"1px solid #e5eaf0",borderRadius:12,padding:14}}><b>{v.ptc_id||"Vehicle"} · {v.vehicle_type}</b><p style={muted}>{v.complaint}</p><small style={muted}>{siteName(v.site_id)} · {formatDate(v.in_at)} · {v.status}</small></article>)}</div></div>
  </section>;
 
  if(section==="my-profile")return <section style={{padding:24,display:"grid",gap:16}}>

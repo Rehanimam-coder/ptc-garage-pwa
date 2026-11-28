@@ -394,3 +394,16 @@ html[dir="rtl"] .loginLanguage{justify-content:flex-start}
 .breakdownDescriptionField{grid-column:1/-1}
 .breakdownAdvancedPanel .moduleFields{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}
 @media(max-width:760px){.breakdownFormGrid{grid-template-columns:1fr}.breakdownModeTabs{width:100%}.breakdownModeTabs button{flex:1;padding:10px 12px}.breakdownAdvancedPanel .moduleFields{grid-template-columns:1fr}.breakdownFormPanel{padding:16px}}
+
+
+.recordCardStoreEdit{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:12px;padding:14px;background:linear-gradient(145deg,#f8fbfa,#f5f8fb);border:1px solid #dfe9e4;border-radius:14px}
+.storeEditSection{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px;background:#fff;border:1px solid #e5ebef;border-radius:11px;min-width:0}
+.storeEditSectionTitle{grid-column:1/-1;display:flex;align-items:center;gap:9px;padding-bottom:8px;border-bottom:1px solid #edf1f3}
+.storeEditSectionTitle>span{width:27px;height:27px;display:grid;place-items:center;border-radius:8px;background:#eaf5ef;color:#087a46;font-size:10px;font-weight:800}
+.storeEditSectionTitle b{display:block;color:#17324d;font-size:12px}
+.storeEditSectionTitle small{display:block;margin-top:2px;color:#7b8795;font-size:10px;font-weight:500}
+.storeEditSection label{font-size:11px}
+.storeEditSection input,.storeEditSection select{min-height:39px!important;font-size:12px!important}
+.storeEditCostRow{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.recordCardStoreEdit>.siteSave{grid-column:1/-1;justify-self:stretch;width:100%;height:42px;font-size:12px}
+@media(max-width:600px){.recordCardStoreEdit{grid-template-columns:1fr}.storeEditSection{grid-template-columns:1fr}.storeEditSectionTitle,.storeEditCostRow{grid-column:1}.recordCardStoreEdit>.siteSave{width:100%}}
