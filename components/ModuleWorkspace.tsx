@@ -264,7 +264,7 @@ function HistoricalImports({profile}:{profile:Profile}){
    let rows:Record<string,any>[];
    try{rows=parseInput();}catch(error){setPreviewCount(0);setNotice(error instanceof Error?error.message:"Could not read the data.");return;}
    setBusy(true);setNotice("Importing "+rows.length+" record(s)...");
-   const payload=rows.map(row=>({...row,created_by:profile.user_id,site_id:row.site_id||profile.site_id}));
+   const payload=rows.map(row=>{const {id:_internalId,created_by:_createdBy,...fields}=row;return {...fields,created_by:profile.user_id,site_id:fields.site_id||profile.site_id};});
    const {error}=await supabase.from(table).insert(payload);
    if(error){setNotice("Import failed: "+error.message);setPreviewCount(rows.length);}
    else{setNotice("Successfully imported "+rows.length+" historical record(s) into "+tables.find(x=>x.value===table)?.label+". Existing records were not changed.");setRaw("");setPreviewCount(0);}
@@ -289,8 +289,8 @@ function AskData(){
  const [searched,setSearched]=useState(false);
  const [error,setError]=useState("");
  const sourceNames:Record<string,string>={vehicle_visits:"Vehicle IN / OUT",parts_orders:"Parts orders",breakdown_jobs:"Breakdown jobs",preventive_maintenance:"Preventive maintenance",ptc_assets:"PTC assets"};
- const labels:Record<string,string>={ptc_id:"PTC ID",vehicle_type:"Vehicle / Equipment",purpose_of_visit:"Visit purpose",complaint:"Problem / Complaint",work_description:"Work description",status:"Status",in_at:"Vehicle IN",out_at:"Vehicle OUT",in_remark:"IN remarks",out_remark:"OUT remarks",part_name:"Part name",part_number:"Part number",quantity:"Quantity",order_status:"Order status",request_number:"Request number",invoice_number:"Invoice number",maintenance_work:"Maintenance work",expected_due_date:"Due date",repeat_by:"Schedule type",repeat_interval:"Repeat interval",asset_name:"Asset name",asset_type:"Asset type",serial_number:"Serial number",make_model:"Make / Model",priority:"Priority",assigned_to:"Assigned to",started_at:"Work started",completed_at:"Completed",remarks:"Remarks",created_at:"Created",updated_at:"Last updated",site_id:"Site ID",created_by:"Created by"};
- const important=["ptc_id","vehicle_type","asset_name","part_name","part_number","maintenance_work","complaint","work_description","purpose_of_visit","status","order_status","priority","request_number","invoice_number","quantity","site_id","in_at","out_at","expected_due_date","created_at"];
+ const labels:Record<string,string>={ptc_id:"PTC ID",vehicle_type:"Vehicle / Equipment",purpose_of_visit:"Visit purpose",complaint:"Problem / Complaint",work_description:"Work description",status:"Status",in_at:"Vehicle IN",out_at:"Vehicle OUT",in_remark:"IN remarks",out_remark:"OUT remarks",part_name:"Part name",part_number:"Part number",quantity:"Quantity",order_status:"Order status",request_number:"Request number",invoice_number:"Invoice number",maintenance_work:"Maintenance work",expected_due_date:"Due date",repeat_by:"Schedule type",repeat_interval:"Repeat interval",asset_name:"Asset name",asset_type:"Asset type",serial_number:"Serial number",make_model:"Make / Model",priority:"Priority",assigned_to:"Assigned to",started_at:"Work started",completed_at:"Completed",remarks:"Remarks",created_at:"Created",updated_at:"Last updated",};
+ const important=["ptc_id","vehicle_type","asset_name","part_name","part_number","maintenance_work","complaint","work_description","purpose_of_visit","status","order_status","priority","request_number","invoice_number","quantity","in_at","out_at","expected_due_date","created_at"];
  const label=(key:string)=>labels[key]||key.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
  const value=(key:string,v:any)=>{
    if(v===null||v===undefined||v==="")return "—";
@@ -348,7 +348,7 @@ function AskData(){
          <details style={{marginTop:13,borderTop:"1px solid #edf0f3",paddingTop:10}}>
            <summary style={{cursor:"pointer",fontWeight:700,fontSize:13,color:"#087a46",outline:"none"}}>View complete record details</summary>
            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8,marginTop:12}}>
-             {Object.entries(r).filter(([k,v])=>v!==null&&v!==undefined&&v!=="").map(([k,v])=><div key={k} style={fieldStyle}><div style={{fontSize:10,fontWeight:700,color:"#718096",textTransform:"uppercase",marginBottom:4}}>{label(k)}</div><div style={{fontSize:13,color:"#243746",overflowWrap:"anywhere",whiteSpace:"pre-wrap"}}>{value(k,v)}</div></div>)}
+             {Object.entries(r).filter(([k,v])=>!["id","site_id","created_by","user_id","linked_user_id","sender_id","recipient_id"].includes(k)&&v!==null&&v!==undefined&&v!=="").map(([k,v])=><div key={k} style={fieldStyle}><div style={{fontSize:10,fontWeight:700,color:"#718096",textTransform:"uppercase",marginBottom:4}}>{label(k)}</div><div style={{fontSize:13,color:"#243746",overflowWrap:"anywhere",whiteSpace:"pre-wrap"}}>{value(k,v)}</div></div>)}
            </div>
          </details>
        </article>;
