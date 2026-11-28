@@ -444,7 +444,7 @@ export default function Home() {
   const supervisorSections = new Set(["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","ptc-assets","parts-order","parts-receive","orders","receipts","general-stores","parts-purchasing"]);
   const sectionAllowed = !profile || profile.role === "admin" || (profile.role === "storekeeper" ? storekeeperSections.has(section) : supervisorSections.has(section));
   useEffect(() => {
-    if (profile && !sectionAllowed) setSection(profile.role === "storekeeper" ? "orders" : "overview");
+    if (profile && !sectionAllowed) setSection(profile.role === "storekeeper" ? "orders" : profile.role === "supervisor" ? "vehicle-in" : "overview");
   }, [profile, section, sectionAllowed]);
 
   if (checking) return <main className="loading"><div className="spinner"/><span>Loading PTC Garage...</span></main>;
