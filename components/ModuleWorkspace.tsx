@@ -125,7 +125,8 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
   const statusKey = useMemo(()=>config?.fields.find(f=>/^(status|order_status|employment_status|priority)$/i.test(f.key))?.key || "",[config]);
   const statusOptions = useMemo(()=>Array.from(new Set(rows.map(r=>String(statusKey ? r[statusKey] || "" : "").trim()).filter(Boolean))).sort(),[rows,statusKey]);
   const filtered = useMemo(()=>rows.filter(r=>{
-    const searchable = Object.fromEntries([...(config?.fields || []).map(field => [field.key, r[field.key]]), ["site", siteName(r.site_id)]]);\n    const matchesSearch = JSON.stringify(searchable).toLowerCase().includes(search.toLowerCase());
+    const searchable = Object.fromEntries([...(config?.fields || []).map(field => [field.key, r[field.key]]), ["site", siteName(r.site_id)]]);
+    const matchesSearch = JSON.stringify(searchable).toLowerCase().includes(search.toLowerCase());
     const status = String(statusKey ? r[statusKey] || "" : "").toLowerCase();
     const matchesStatus = statusFilter==="all" || (statusFilter==="open" ? !/complete|closed|cancelled|inactive|disposed|paused/i.test(status) : status===statusFilter.toLowerCase());
     return matchesSearch && matchesStatus;
