@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import ModuleWorkspace from "@/components/ModuleWorkspace";
+import ReferencePages from "@/components/ReferencePages";
 import ArabicTranslator from "@/components/ArabicTranslator";
 import { Wrench, CarFront, Package, ClipboardList, Users, Building2, LogOut, LockKeyhole, LayoutDashboard, ArrowUpRight, RefreshCw, Boxes, Plus, Pencil, Power, X, MapPin, ChevronDown, Gauge, AlertTriangle, FileBarChart2, Bell, UserRound, Home as HomeIcon, Truck, ShoppingCart, BriefcaseBusiness, MessageCircle, BarChart3, ShieldCheck, Settings, Upload, Activity, BrainCircuit, HelpCircle, Database, ClipboardCheck, CalendarClock, ContactRound, PackageSearch, History } from "lucide-react";
 
@@ -508,6 +509,7 @@ export default function Home() {
     </aside>
     <section className="mainArea"><header className="topbar"><div><span className="eyebrow dark">PTC MAINTENANCE</span><h2>{pageTitle}</h2></div><div className="topRight"><button type="button" className="languageToggle" onClick={()=>setLanguage(language==="en"?"ar":"en")} aria-label="Switch language">{language==="en"?"عربي":"EN"}</button><span className="liveDot"/> <span>{tr("System online")}</span><div className="topAvatar">{greeting.slice(0,1).toUpperCase()}</div></div></header>
       <div className="content">
+        {["overview","home","my-actions","my-profile"].includes(section) && <ReferencePages section={section} profile={profile!} sites={sites} onNavigate={setSection} language={language} onLanguageChange={setLanguage}/> }
         {(section==="parts-order"||section==="orders")&&<section className="sitePage partsPage">
           <div className="siteIntro"><div><span className="eyebrow dark">PARTS MANAGEMENT</span><h1>{section==="parts-order"?"Parts Order":"Parts Order History"}</h1><p>{section==="parts-order"?"Create a new parts request with multiple part lines.":"Review and update parts request records."}</p></div><button className="refreshBtn" onClick={loadPartsOrders}><RefreshCw size={16}/> Refresh</button></div>
           {partsMessage&&<div className={partsMessage.includes("successfully")?"siteSuccess":"siteError"}>{partsMessage}</div>}
@@ -564,42 +566,6 @@ export default function Home() {
           <div className="siteListHeader"><div><h3>Report results</h3><p>{reportRows.length} vehicle visit(s) · {reportFrom} to {reportTo}</p></div><button className="secondaryBtn" onClick={downloadReport} disabled={!reportRows.length}><FileBarChart2 size={15}/> Download CSV</button></div>
           <VisitTable rows={reportRows}/>
         </section>}
-        {section==="overview" && <>
-          <div className="welcome"><div><span className="eyebrow">YOUR WORKSPACE</span><h1>Good day, {greeting}.</h1><p>Here is what is happening across your {profile.role==="admin"?"garage operations":profile.role==="supervisor"?"assigned site":"parts desk"}.</p></div><button className="refreshBtn" onClick={()=>loadCounts(profile)}><RefreshCw size={16}/> Refresh</button></div>
-          <div className="statsGrid">
-            {!isStore && <Stat icon={<CarFront/>} label="Vehicles in Garage" value={counts.inGarage} hint="Currently checked in"/>}
-            <Stat icon={<ClipboardList/>} label="Open Parts Orders" value={counts.openOrders} hint="Awaiting completion"/>
-            <Stat icon={<Package/>} label="Received Today" value={counts.receivedToday} hint="Parts receipt entries"/>
-            {profile.role==="admin" && <Stat icon={<Users/>} label="Team Members" value={counts.users} hint="Registered accounts"/>}
-          </div>
-          <div className="sectionHeading"><div><h3>All workspace modules</h3><p>Every module available in your sidebar is accessible directly from here.</p></div></div>
-          <div style={{display:"grid",gap:22}}>
-            {navGroups.map(group=>{
-              const items=group.items.filter(item=>item.id!=="overview");
-              if(!items.length)return null;
-              return <section key={group.label} aria-label={tr(group.label)}>
-                <div style={{fontSize:12,fontWeight:800,letterSpacing:".09em",color:"#087a46",marginBottom:11}}>{tr(group.label)}</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,220px),1fr))",gap:12}}>
-                  {items.map(item=><button key={item.id} type="button" onClick={()=>setSection(item.id)} style={{display:"flex",alignItems:"center",gap:13,textAlign:"left",padding:"16px 15px",minHeight:82,border:"1px solid #e1e8ef",borderRadius:14,background:"#fff",boxShadow:"0 3px 12px rgba(16,24,40,.035)",cursor:"pointer",color:"#172b3a",transition:"transform .15s ease,box-shadow .15s ease"}}>
-                    <span style={{width:43,height:43,flex:"0 0 43px",display:"grid",placeItems:"center",borderRadius:12,background:"#eaf7f0",color:"#087a46"}}><item.icon size={20}/></span>
-                    <span style={{display:"grid",gap:5,minWidth:0,flex:1}}><b style={{fontSize:14,lineHeight:1.3}}>{tr(item.label)}</b><small style={{fontSize:11,color:"#718096",lineHeight:1.35}}>Open {tr(item.label)} module</small></span>
-                    <ArrowUpRight size={17} color="#8a9aab"/>
-                  </button>)}
-                </div>
-              </section>;
-            })}
-          </div>
-          <div className="sectionHeading"><div><h3>All modules</h3><p>Every option available in your sidebar, grouped by category</p></div></div>
-          <div className="dashboardModuleDirectory">
-            {navGroups.map(group=><section className="dashboardModuleGroup" key={group.label}>
-              <div className="dashboardModuleHeading">{tr(group.label)}</div>
-              <div className="quickGrid">
-                {group.items.map(item=><Quick key={item.id} icon={<item.icon size={19}/>} title={tr(item.label)} desc={item.id==="overview"?"Open dashboard":item.id==="home"?"Return to home dashboard":"Open "+item.label} onClick={()=>setSection(item.id==="home"?"overview":item.id)}/>)}
-              </div>
-            </section>)}
-          </div>
-          <div className="notice"><LockKeyhole size={18}/><div><b>Role-based access is enabled</b><p>{isStore?"Your portal is limited to parts orders and receiving. Vehicle records are not available to this account.":profile.role==="supervisor"?"You can manage vehicle and parts operations for your assigned site.":"You have administrator access to all sites and modules."}</p></div></div>
-        </>}
         {["vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history"].includes(section) && profile.role!=="storekeeper" && <section className="sitePage">
           <div className="siteIntro"><div><span className="eyebrow dark">GARAGE OPERATIONS</span><h1>{section==="vehicle-in"?"Vehicle IN":section==="vehicle-out"?"Vehicle OUT":section==="vehicle-in-history"?"Vehicle IN History":"Vehicle OUT History"}</h1><p>{section==="vehicle-in"?"Register a new vehicle arriving at the garage.":section==="vehicle-out"?"Record completed work and confirm vehicle release.":section==="vehicle-in-history"?"Review all vehicle entry records.":"Review all vehicle release records and work details."}</p></div><button className="refreshBtn" onClick={loadVehicles}><RefreshCw size={16}/> Refresh</button></div>
           {vehicleMessage && <div className={vehicleMessage.includes("successfully") ? "siteSuccess" : "siteError"}>{vehicleMessage}</div>}
@@ -711,7 +677,7 @@ export default function Home() {
           {sitesLoading?<div className="siteEmpty"><div className="spinner"/> Loading sites...</div>:sites.length===0?<div className="siteEmpty">No sites found. Add your first site using the form above.</div>:<div className="recordCardGrid">{sites.map(site=><article className="recordCard" key={site.id}><div className="recordCardHead"><div className="recordCardTitle"><span className="recordCardEyebrow">{site.code}</span><h3>{site.name}</h3><small>{site.address||"No address provided"}</small></div><span className={site.is_active?"statusActive":"statusInactive"}>{site.is_active?"Active":"Inactive"}</span></div><div className="recordCardFoot"><div className="siteActions"><button type="button" className="iconAction" title="Edit site" onClick={()=>startEdit(site)}><Pencil size={15}/> Edit</button><button type="button" className={site.is_active?"iconAction deactivate":"iconAction activate"} title={site.is_active?"Deactivate site":"Activate site"} onClick={()=>toggleSite(site)}><Power size={15}/>{site.is_active?"Deactivate":"Activate"}</button></div></div><details className="recordCardDetails"><summary>View complete details <span>→</span></summary><div className="recordCardFields expanded"><div className="recordCardField"><small>Site code</small><b>{site.code}</b></div><div className="recordCardField"><small>Address</small><b>{site.address||"—"}</b></div><div className="recordCardField"><small>Created</small><b>{site.created_at?new Date(site.created_at).toLocaleString():"—"}</b></div></div></details></article>)}</div>}
           <div className="siteFootnote"><LockKeyhole size={15}/> Deactivating a site does not delete its existing vehicle, parts or history records.</div>
         </section>}
-        {!["overview","sites","users","employee-directory","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <ModuleWorkspace section={section} profile={profile} sites={sites} onNavigate={setSection}/>}
+        {!["overview","home","my-actions","my-profile","sites","users","employee-directory","vehicle-in","vehicle-out","vehicle-in-history","vehicle-out-history","parts-order","orders","parts-receive","receipts","breakdown-dashboard","breakdowns","maintenance","reports"].includes(section) && <ModuleWorkspace section={section} profile={profile} sites={sites} onNavigate={setSection}/>}
 
       </div>
     </section>
