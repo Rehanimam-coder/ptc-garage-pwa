@@ -15,7 +15,7 @@ const emptyRow:MaintenanceRow={maintenance_date:"",ptc_id:"",vehicle_number:"",s
 
 function norm(v:any){return String(v??"").trim().toLowerCase().replace(/\s+/g," ");}
 function dateValue(v:any):string{
- if(v instanceof Date&&!Number.isNaN(v.getTime()))return v.toISOString().slice(0,10);
+ if(v instanceof Date&&!Number.isNaN(v.getTime()))return [v.getFullYear(),String(v.getMonth()+1).padStart(2,"0"),String(v.getDate()).padStart(2,"0")].join("-");
  if(typeof v==="number"&&v>20000&&v<80000){const d=XLSX.SSF.parse_date_code(v);if(d)return new Date(Date.UTC(d.y,d.m-1,d.d)).toISOString().slice(0,10);}
  const s=String(v??"").trim();if(!s)return "";
  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);
