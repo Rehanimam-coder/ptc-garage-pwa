@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatDate, formatDateTime } from "@/lib/date-format";
 import MaintenanceHistory from "@/components/MaintenanceHistory";
+import GeneralStoreHistory from "@/components/GeneralStoreHistory";
 
 type Profile = { user_id: string; username: string | null; full_name: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null };
 type Site = { id: string; name: string; is_active: boolean };
@@ -207,6 +208,7 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
         </article>;})}
       </div>}
       {(section==="breakdowns"||section==="maintenance")&&<><div className="siteListHeader"><div><h3>Previous vehicle visit records</h3><p>Records from the previous Vehicle IN / OUT process are available here.</p></div><span className="siteCount">{legacyRows.length} Records</span></div>{legacyRows.length===0?<div className="siteEmpty">No previous records were found for this category.</div>:<div className="recordCardGrid">{legacyRows.map(v=><article className="recordCard" key={v.id}><div className="recordCardHead"><div className="recordCardTitle"><span className="recordCardEyebrow">{v.ptc_id||"No PTC ID"}</span><h3>{v.vehicle_type||"Vehicle visit"}</h3><small>{v.purpose_of_visit||"—"}</small></div><span className="recordStatus">{v.status||"—"}</span></div><div className="recordCardFields">{[{label:"Problem / work",value:v.complaint},{label:"IN date",value:v.in_at?formatDateTime(v.in_at):"—"},{label:"OUT date",value:v.out_at?formatDateTime(v.out_at):"—"}].map(x=><div className="recordCardField" key={x.label}><small>{x.label}</small><b>{x.value||"—"}</b></div>)}</div><details className="recordCardDetails"><summary>View record details <span>→</span></summary><div className="recordCardFields expanded">{Object.entries(v).filter(([key,value])=>!["id","site_id","created_by","user_id"].includes(key)&&value!==null&&value!==undefined&&value!=="").map(([key,value])=><div className="recordCardField" key={key}><small>{key.replace(/_/g," ")}</small><b>{/(^|_)(at|date|time)$/.test(key)&&!Number.isNaN(Date.parse(String(value)))?formatDateTime(String(value)):String(value)}</b></div>)}</div></details></article>)}</div>}</>}
+      {section === "general-stores" && <GeneralStoreHistory profile={profile} sites={sites}/>}
       <div className="siteFootnote">Access is controlled by role and site permissions. Supervisors can access their assigned sites, while Store Keeper access is limited to parts and stores.</div>
     </section>;
   }
@@ -253,6 +255,117 @@ export default function ModuleWorkspace({ section, profile, sites, onNavigate }:
 }
 
 function Denied(){return <section className="sitePage"><div className="siteError">You do not have permission to access this module.</div></section>;}
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { formatDateTime } from "@/lib/date-format";
+
+type Profile = { user_id: string; role: "admin" | "supervisor" | "storekeeper"; site_id: string | null };
+type Site = { id: string; name: string };
+
+const fields = [
+  ["item_code", "Item code"],
+  ["item_name", "Item name"],
+  ["category", "Category"],
+  ["unit", "Unit"],
+  ["quantity_on_hand", "Available quantity"],
+  ["reorder_level", "Reorder point"],
+  ["remarks", "Remarks"]
+] as const;
+
+function shown(value: any) {
+  return value === null || value === undefined || value === "" ? "—" : String(value);
+}
+
+export default function GeneralStoreHistory({ profile, sites }: { profile: Profile; sites: Site[] }) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [people, setPeople] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function load() {
+    if (!supabase) return;
+    setLoading(true);
+    setError("");
+    let query = supabase.from("general_store_item_history").select("*").order("changed_at", { ascending: false }).limit(500);
+    if (profile.role === "supervisor" && profile.site_id) query = query.eq("site_id", profile.site_id);
+    const [{ data, error: historyError }, { data: profiles }] = await Promise.all([
+      query,
+      supabase.from("profiles").select("user_id,full_name,username")
+    ]);
+    if (historyError) setError("Could not load General Stores history: " + historyError.message);
+    else setRows(data || []);
+    setPeople(Object.fromEntries((profiles || []).map((person: any) => [
+      person.user_id, person.full_name || person.username || "Team member"
+    ])));
+    setLoading(false);
+  }
+
+  useEffect(() => { void load(); }, [profile.user_id, profile.role, profile.site_id]);
+
+  const siteName = (id: string) => sites.find(site => site.id === id)?.name || "—";
+  const actionLabel: Record<string, string> = {
+    snapshot: "Opening snapshot",
+    insert: "Item created",
+    update: "Item updated",
+    delete: "Item deleted"
+  };
+
+  return <section className="sitePage" style={{ marginTop: 26 }}>
+    <div className="siteListHeader">
+      <div>
+        <h3>General Stores change history</h3>
+        <p>Every saved stock or item change is retained with the previous and new values.</p>
+      </div>
+      <div className="moduleHeaderActions">
+        <span className="siteCount">{rows.length} History records</span>
+        <button type="button" className="refreshBtn" onClick={load}>Refresh history</button>
+      </div>
+    </div>
+    {error && <div className="siteError">{error}</div>}
+    {loading ? <div className="siteEmpty">Loading General Stores history...</div> :
+      rows.length === 0 ? <div className="siteEmpty">No General Stores history found.</div> :
+      <div className="recordCardGrid">
+        {rows.map(row => {
+          const before = row.old_values || {};
+          const after = row.new_values || {};
+          const current = row.action === "delete" ? before : after;
+          const changed = fields.filter(([key]) => JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null));
+          return <article className="recordCard" key={row.id}>
+            <div className="recordCardHead">
+              <div className="recordCardTitle">
+                <span className="recordCardEyebrow">{siteName(row.site_id)} · {formatDateTime(row.changed_at)}</span>
+                <h3>{shown(current.item_name || current.item_code || "General Store item")}</h3>
+                <small>{actionLabel[row.action] || row.action} · {people[row.changed_by] || "System / team member"}</small>
+              </div>
+              <span className="recordStatus">{row.action === "delete" ? "Deleted" : row.action === "update" ? "Updated" : "Saved"}</span>
+            </div>
+            <div className="recordCardFields">
+              <div className="recordCardField"><small>Item code</small><b>{shown(current.item_code)}</b></div>
+              <div className="recordCardField"><small>Available quantity</small><b>{shown(current.quantity_on_hand)} {shown(current.unit) === "—" ? "" : current.unit}</b></div>
+              <div className="recordCardField"><small>Changed by</small><b>{people[row.changed_by] || "System / team member"}</b></div>
+              <div className="recordCardField"><small>Changed at</small><b>{formatDateTime(row.changed_at)}</b></div>
+            </div>
+            <details className="recordCardDetails">
+              <summary>Compare previous and saved details <span>→</span></summary>
+              <div className="recordCardFields expanded">
+                {fields.map(([key, label]) => <div className="recordCardField" key={"old-" + key}>
+                  <small>Previous · {label}</small><b>{row.action === "insert" || row.action === "snapshot" ? "—" : shown(before[key])}</b>
+                </div>)}
+                {fields.map(([key, label]) => <div className="recordCardField" key={"new-" + key}>
+                  <small>{row.action === "delete" ? "Deleted · " : "Saved · "}{label}</small><b>{row.action === "delete" ? "—" : shown(after[key])}</b>
+                </div>)}
+                <div className="recordCardField"><small>Changed fields</small><b>{row.action === "insert" || row.action === "snapshot" ? "Initial item details" : changed.map(([, label]) => label).join(", ") || "No visible field changes"}</b></div>
+              </div>
+            </details>
+          </article>;
+        })}
+      </div>}
+    <div className="siteFootnote">History is append-only for normal users. Supervisors see their assigned site only; Store Keeper sees General Stores records across sites. Vehicle records are not included.</div>
+  </section>;
+}
+
 function AuditHistory({profile}:{profile:Profile}){
  const [rows,setRows]=useState<any[]>([]);const [people,setPeople]=useState<Record<string,string>>({});const [error,setError]=useState("");
  useEffect(()=>{void(async()=>{const [{data,error},{data:profiles}]=await Promise.all([supabase!.from("audit_logs").select("*").order("created_at",{ascending:false}).limit(500),supabase!.from("profiles").select("user_id,full_name,username")]);if(error)setError(error.message);else setRows(data||[]);setPeople(Object.fromEntries((profiles||[]).map((p:any)=>[p.user_id,p.full_name||p.username||"Team member"])));})();},[]);
