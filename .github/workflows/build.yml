@@ -1,4 +1,4 @@
-name: Next.js build check
+name: Next.js and Cloudflare build check
 
 on:
   push:
@@ -15,7 +15,13 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run build
+      - name: Verify standard Next.js build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: build-check-placeholder
+      - name: Verify Cloudflare OpenNext build
+        run: npm run cf:build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: build-check-placeholder
